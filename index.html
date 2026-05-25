@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Acciones</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;padding:16px}
+h1{font-size:20px;font-weight:600;margin-bottom:4px;color:#1a1a1a}
+.subtitle{font-size:13px;color:#666;margin-bottom:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+.card{background:#fff;border-radius:10px;padding:10px 14px;border:1px solid #e8e8e4}
+.card-label{font-size:11px;color:#888;margin-bottom:4px}
+.card-val{font-size:22px;font-weight:600;color:#1a1a1a}
+.card-sub{font-size:11px;color:#999;margin-top:2px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;background:#fff;padding:10px 12px;border-radius:10px;border:1px solid #e8e8e4}
+.filters select{font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#1a1a1a;cursor:pointer}
+.filters label{font-size:12px;color:#666;white-space:nowrap}
+.slider-wrap{display:flex;align-items:center;gap:6px}
+.slider-wrap input[type=range]{width:90px;accent-color:#185FA5}
+.slider-val{font-size:12px;font-weight:600;color:#1a1a1a;min-width:40px}
+.count-info{font-size:12px;color:#888;margin-bottom:6px}
+.tbl-wrap{overflow-x:auto;border:1px solid #e8e8e4;border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+thead th{background:#f9f9f7;padding:8px 9px;text-align:left;font-weight:600;font-size:11px;color:#666;cursor:pointer;white-space:nowrap;user-select:none;border-bottom:1px solid #e8e8e4}
+thead th:hover{color:#1a1a1a;background:#f0f0ea}
+thead th.sort-asc::after{content:" ↑"}
+thead th.sort-desc::after{content:" ↓"}
+tbody tr{border-bottom:1px solid #f0f0ea}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#fafafa}
+td{padding:7px 9px;white-space:nowrap;color:#1a1a1a;font-size:12px}
+.ticker{font-weight:700;font-size:13px;color:#1a1a1a}
+.name-cell{color:#666;font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.up-pos{color:#27500A;font-weight:600}
+.up-neg{color:#A32D2D;font-weight:600}
+.up-mid{color:#7a4a00;font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:middle}
+.na{color:#bbb}
+footer{margin-top:16px;font-size:11px;color:#bbb;text-align:center}
+</style>
+</head>
+<body>
+
+<h1>📊 Dashboard de Acciones</h1>
+<p class="subtitle">Actualizado desde Google Sheets · <span id="fecha"></span></p>
+
+<div class="cards" id="summary-cards"></div>
+
+<div class="filters">
+  <select id="f-sector"><option value="">Todos los sectores</option></select>
+  <select id="f-veredicto"><option value="">Todos los veredictos</option></select>
+  <div class="slider-wrap">
+    <label>Upside FZ mín:</label>
+    <input type="range" id="f-upside" min="-100" max="60" step="1" value="-100">
+    <span class="slider-val" id="upside-lbl">–</span>
+  </div>
+  <select id="f-recom"><option value="">Toda recomendación</option></select>
+</div>
+
+<div class="count-info" id="count-info"></div>
+
+<div class="tbl-wrap">
+  <table>
+    <thead id="tbl-head"></thead>
+    <tbody id="tbl-body"></tbody>
+  </table>
+</div>
+
+<footer>Datos extraídos del sheet de análisis · Solo para uso informativo, no constituye asesoría financiera</footer>
+
+<script>
+document.getElementById("fecha").textContent = new Date().toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
+
+const RAW = [
+["GOOGL","Alphabet Inc","Communication Services",382.97,4620.52,12.91,12.05,-6.27,"OPORTUNIDAD",6,10.03,57.49,"Neutral",1.36,1],
+["HOOD","Robinhood Markets Inc","Financial",73.64,66.37,36.69,33.62,-52.14,"Neutral",5,null,43.83,"Neutral",1.77,2],
+["UBER","Uber Technologies Inc","Technology",71.82,146.2,46.05,45.43,-29.58,"Neutral",6,4.16,40.18,"Neutral",1.3,1],
+["MSFT","Microsoft Corp","Technology",418.57,3109.32,33.70,33.94,-24.64,"OPORTUNIDAD",5,9.28,54.42,"Neutral",1.23,1],
+["VST","Vistra Corp","Utilities",156.27,52.69,49.22,44.17,-28.91,"Evitar",6,null,55.02,"Neutral",1.3,1],
+["IONQ","IonQ Inc","Technology",63.64,23.75,9.92,6.29,-24.81,"Neutral",2,4.86,69.21,"Venta",1.31,1],
+["BKNG","Booking Holdings Inc","Consumer Cyclical",161.06,124.8,39.84,39.33,-31.05,"Buena",6,7.03,44.44,"Neutral",1.44,2],
+["MELI","MercadoLibre Inc","Consumer Cyclical",1664.42,84.38,35.65,34.00,-37.08,"Neutral",4,2.89,46.54,"Neutral",1.41,2],
+["ORCL","Oracle Corp","Technology",192.08,552.43,26.87,36.86,-44.44,"Neutral",5,2.26,59.42,"Neutral",1.53,2],
+["META","Meta Platforms Inc","Communication Services",610.26,1549.1,34.34,null,-23.36,"Buena",null,null,45.34,"Neutral",1.29,null],
+["DASH","DoorDash Inc","Consumer Cyclical",160.25,69.82,55.26,53.50,-43.87,"Neutral",5,6.64,47.04,"Neutral",1.49,2],
+["CRM","Salesforce Inc","Technology",180.07,147.31,42.05,46.18,-37.12,"Buena",6,3.63,50.82,"Neutral",1.64,2],
+["NU","Nu Holdings Ltd","Financial",12.73,61.88,49.49,52.32,-32.93,"Buena",2,null,38.16,"Compra",1.33,1],
+["NVDA","NVIDIA Corp","Technology",215.33,5210.99,37.45,36.64,-8.97,"Buena",6,44.16,53.71,"Neutral",1.27,1],
+["V","Visa Inc","Financial",328.88,619.65,22.06,21.24,-12.42,"Neutral",7,8.27,57.78,"Neutral",1.32,1],
+["MA","Mastercard Incorporated","Financial",498.54,440.5,30.46,29.77,-17.15,"Neutral",6,10.82,48.21,"Neutral",1.27,1],
+["CEG","Constellation Energy Corp","Utilities",294.07,106.22,26.58,24.37,-28.74,"Neutral",4,null,51.69,"Neutral",1.5,2],
+["TLN","Talen Energy Corp","Utilities",372.45,16.91,28.00,27.63,-17.47,"Evitar",4,null,55.34,"Neutral",1.31,2],
+["TKO","TKO Group Holdings Inc","Communication Services",191.5,36.6,22.40,22.40,-15.62,"Neutral",6,1.64,52.43,"Neutral",1.61,2],
+["XOM","Exxon Mobil Corp","Energy",154.92,642.14,8.86,8.35,-12.18,"Evitar",5,3.89,51.69,"Neutral",2.31,2],
+["LLY","Lilly(Eli) & Co","Healthcare",1065,1002.95,17.44,null,-6.08,"Neutral",null,null,68.31,"Venta",1.52,null],
+["CME","CME Group Inc","Financial",291.23,105.53,6.17,null,-9.79,"Neutral",null,null,48.46,"Neutral",2.53,null],
+["RACE","Ferrari NV","Consumer Cyclical",348.24,61.47,26.99,null,-32.91,"Neutral",null,null,55.97,"Neutral",1.56,null],
+["QCOM","Qualcomm Inc","Technology",238.16,251.02,-23.44,-26.11,-3.93,"Neutral",5,5.76,71.74,"Venta Fuerte",2.67,3],
+["BABA","Alibaba Group Holding Ltd ADR","Consumer Cyclical",130,311.89,47.85,null,-32.53,"Buena",null,null,44.08,"Neutral",1.34,null],
+["DIS","Walt Disney Co","Communication Services",103,178.86,28.89,null,-17.40,"Buena",null,null,48.68,"Neutral",1.3,null],
+["NFLX","Netflix Inc","Communication Services",88.6,373.08,31.30,null,-33.94,"Neutral",null,null,43.87,"Neutral",1.64,null],
+["AVGO","Broadcom Inc","Technology",414.14,1960.82,15.67,null,-6.38,"Buena",null,null,53.07,"Neutral",1.28,null],
+["KO","Coca-Cola Co","Consumer Defensive",81.48,350.57,7.51,null,-1.43,"Neutral",null,null,66.44,"Venta",1.6,null],
+["TTWO","Take-Two Interactive Software Inc","Communication Services",227.55,42.14,24.18,null,-14.06,"Evitar",null,null,53.17,"Neutral",1.26,null],
+["CMG","Chipotle Mexican Grill","Consumer Cyclical",32.89,42.19,32.17,31.89,-43.70,"Neutral",5,7.41,47.86,"Neutral",1.73,2],
+["BLK","Blackrock Inc","Financial",1073,174.73,16.73,16.61,-12.04,"Neutral",6,1.66,54.15,"Neutral",1.42,2],
+["UNH","Unitedhealth Group Inc","Healthcare",388.47,352.79,1.98,null,-3.88,"Neutral",null,null,67.84,"Venta",1.65,null],
+["PYPL","PayPal Holdings Inc","Financial",44.23,39.02,14.06,18.77,-44.36,"Neutral",6,2.03,36.18,"Compra",2.8,3],
+["ADBE","Adobe Inc","Technology",244.76,98.93,30.56,33.71,-41.93,"Neutral",7,8.92,47.79,"Neutral",2.41,3],
+["LULU","Lululemon Athletica Inc","Consumer Cyclical",127.18,15.2,34.71,39.14,-62.62,"Buena",5,8.16,39.48,"Compra",2.85,3],
+["BAH","Booz Allen Hamilton Holding Corp","Industrials",78.68,9.49,12.70,21.38,-39.18,"OPORTUNIDAD",4,4.23,54.72,"Neutral",3.09,3],
+["PG","Procter & Gamble Co","Consumer Defensive",144.44,336.34,13.44,13.38,-15.53,"Neutral",6,5.57,49.96,"Neutral",2.08,2],
+["AAPL","Apple Inc","Technology",308.82,4535.75,1.34,null,1.07,"Evitar",null,null,78.36,"Venta Fuerte",1.94,null],
+["AMZN","Amazon.com Inc","Consumer Cyclical",266.32,2864.83,18.68,17.39,-4.39,"Neutral",6,4.54,57.98,"Neutral",1.23,1],
+["T","AT&T Inc","Communication Services",25.26,175.52,19.95,20.23,-15.21,"Neutral",6,0.95,46.38,"Neutral",2,2],
+["SONY","Sony Group Corp ADR","Technology",22.14,130.8,37.44,-99.14,-27.03,"Neutral",7,3.59,56.49,"Neutral",1.22,2],
+["CVS","CVS Health Corp","Healthcare",93.26,118.99,7.72,9.24,-5.25,"Neutral",6,2.35,65.36,"Venta",1.48,2],
+["TMUS","T-Mobile US Inc","Communication Services",191.47,207.21,35.32,36.21,-26.80,"Neutral",5,1.85,47.35,"Neutral",1.43,2],
+["ADP","Automatic Data Processing Inc","Technology",225.31,90.06,9.25,8.50,-31.71,"Buena",7,2.4,65.54,"Venta",2.7,3],
+["AZO","Autozone Inc","Consumer Cyclical",3406.5,56.13,25.21,23.43,-22.37,"Neutral",6,2.78,45.33,"Neutral",1.57,2],
+["SPOT","Spotify Technology SA","Communication Services",519.86,107,14.60,15.50,-33.78,"Neutral",6,15.24,67.35,"Venta",1.51,2],
+["CRCL","Circle Internet Group Inc","Financial",113.12,28.12,28.33,28.89,-62.17,"Evitar",3,0.26,51.85,"Neutral",2.14,2],
+["PANW","Palo Alto Networks Inc","Technology",260.58,212.63,-12.77,-14.18,2.96,"Neutral",5,5.72,83.61,"Venta Fuerte",1.5,2],
+["NOW","ServiceNow Inc","Technology",102.13,105.33,37.70,null,-51.71,"OPORTUNIDAD",null,null,57.65,"Neutral",1.35,null],
+["DDOG","Datadog Inc","Technology",222.32,79.14,1.32,0.31,0.89,"Neutral",5,10.61,83.97,"Venta Fuerte",1.33,1],
+["FTNT","Fortinet Inc","Technology",133.93,98.12,-19.14,null,2.74,"Buena",null,null,88.22,"Venta Fuerte",2.68,null],
+["CRWD","Crowdstrike Holdings Inc","Technology",663.46,168.87,-18.29,-20.47,0.59,"Neutral",3,10.81,86.86,"Venta Fuerte",1.57,2],
+["NET","Cloudflare Inc","Technology",216.17,76.41,8.79,8.33,-16.86,"Neutral",2,8.93,54.13,"Neutral",1.87,2],
+["YOU","Clear Secure Inc","Technology",60.06,8.03,5.38,3.23,-3.47,"Buena",6,2.86,59.65,"Neutral",2.38,2],
+["DAL","Delta Air Lines Inc","Industrials",76.14,50.02,7.78,5.56,-0.33,"Buena",6,1.29,64.58,"Venta",1.37,1],
+["RCL","Royal Caribbean Group","Consumer Cyclical",256.1,68.68,32.05,32.94,-30.12,"Neutral",7,2.27,45.04,"Neutral",1.67,2],
+["LIN","Linde Plc","Basic Materials",517.58,239.43,4.88,4.64,-0.71,"Neutral",6,3.81,60.28,"Venta",1.68,2]
+];
+
+const COLS=[
+  {k:"ticker",label:"Ticker"},{k:"name",label:"Nombre"},{k:"sector",label:"Sector"},
+  {k:"price",label:"Precio"},{k:"mcap",label:"Mkt Cap"},
+  {k:"upside_fz",label:"Upside FZ"},{k:"upside_sa",label:"Upside SA"},{k:"ath_disc",label:"ATH Disc"},
+  {k:"veredicto",label:"Veredicto"},{k:"piotroski",label:"Piotr."},{k:"altman",label:"Altman Z"},
+  {k:"rsi",label:"RSI"},{k:"recom_rsi",label:"RSI Rec"},{k:"recom_fz",label:"Rec FZ"},{k:"recom_sa",label:"Rec SA"}
+];
+
+const SC={"Technology":["#E8F4FD","#0C447C"],"Communication Services":["#EEF0FD","#3C3489"],"Financial":["#E8F7F0","#085041"],"Consumer Cyclical":["#FEF4E0","#7a4a00"],"Consumer Defensive":["#EFF8E0","#27500A"],"Healthcare":["#FDEEE8","#712B13"],"Utilities":["#F5F5F0","#444441"],"Energy":["#FDE8F0","#72243E"],"Industrials":["#FEF8E0","#5a3e0a"],"Basic Materials":["#E8F5FF","#0a4a6e"]};
+const VC={"OPORTUNIDAD":["#EFF8E0","#27500A"],"Buena":["#E8F7F0","#085041"],"Neutral":["#F5F5F0","#5F5E5A"],"Evitar":["#FDEAEA","#791F1F"]};
+const RC={"Compra":["#EFF8E0","#27500A"],"Neutral":["#F5F5F0","#5F5E5A"],"Venta":["#FEF4E0","#7a4a00"],"Venta Fuerte":["#FDEAEA","#791F1F"]};
+
+function badge(t,c){if(!t||t==="null")return`<span class="na">–</span>`;return`<span class="badge" style="background:${c[0]};color:${c[1]}">${t}</span>`;}
+function pct(v,cls){if(v===null)return`<span class="na">–</span>`;return`<span class="${cls}">${v>0?"+":""}${v.toFixed(1)}%</span>`;}
+function piotr(v){if(v===null)return`<span class="na">–</span>`;const c=v>=7?"#3B6D11":v>=5?"#185FA5":v>=3?"#BA7517":"#A32D2D";return`<span class="dot" style="background:${c}"></span><b>${v}</b>`;}
+function fmtP(v){return v>=1000?v.toFixed(0)+"$":v.toFixed(2)+"$";}
+function fmtM(v){return v>=1000?(v/1000).toFixed(1)+"T":v.toFixed(0)+"B";}
+
+let sortCol="upside_fz",sortDir=-1;
+
+function toObj(r){return{ticker:r[0],name:r[1],sector:r[2],price:r[3],mcap:r[4],upside_fz:r[5],upside_sa:r[6],ath_disc:r[7],veredicto:r[8],piotroski:r[9],altman:r[10],rsi:r[11],recom_rsi:r[12],recom_fz:r[13],recom_sa:r[14]};}
+
+function getData(){
+  const sec=document.getElementById("f-sector").value;
+  const ver=document.getElementById("f-veredicto").value;
+  const ups=parseFloat(document.getElementById("f-upside").value);
+  const rec=document.getElementById("f-recom").value;
+  return RAW.filter(r=>(!sec||r[2]===sec)&&(!ver||r[8]===ver)&&(r[5]===null||r[5]>=ups)&&(!rec||r[12]===rec)).map(toObj);
+}
+
+function sortData(d){
+  return[...d].sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    if(av===null&&bv===null)return 0;if(av===null)return 1;if(bv===null)return-1;
+    if(typeof av==="string")return av.localeCompare(bv)*sortDir;
+    return(av-bv)*sortDir;
+  });
+}
+
+function renderSummary(data){
+  const opps=data.filter(d=>d.veredicto==="OPORTUNIDAD").length;
+  const buenas=data.filter(d=>d.veredicto==="Buena").length;
+  const upFZ=data.filter(d=>d.upside_fz!==null).map(d=>d.upside_fz);
+  const avgUp=upFZ.length?upFZ.reduce((a,b)=>a+b,0)/upFZ.length:0;
+  const pios=data.filter(d=>d.piotroski!==null).map(d=>d.piotroski);
+  const avgPio=pios.length?pios.reduce((a,b)=>a+b,0)/pios.length:0;
+  const compras=data.filter(d=>d.recom_rsi==="Compra"||d.recom_rsi==="Compra Fuerte").length;
+  document.getElementById("summary-cards").innerHTML=`
+    <div class="card"><div class="card-label">Total tickers</div><div class="card-val">${data.length}</div></div>
+    <div class="card"><div class="card-label">Oportunidades</div><div class="card-val" style="color:#27500A">${opps}</div><div class="card-sub">${buenas} buenas</div></div>
+    <div class="card"><div class="card-label">Upside FZ promedio</div><div class="card-val" style="color:${avgUp>=0?"#27500A":"#A32D2D"}">${avgUp>=0?"+":""}${avgUp.toFixed(1)}%</div></div>
+    <div class="card"><div class="card-label">Piotroski prom.</div><div class="card-val">${avgPio.toFixed(1)}</div><div class="card-sub">/9 pts</div></div>
+    <div class="card"><div class="card-label">Señales compra RSI</div><div class="card-val" style="color:#185FA5">${compras}</div></div>`;
+}
+
+function renderHead(){
+  document.getElementById("tbl-head").innerHTML=`<tr>${COLS.map(c=>{
+    let cls=c.k===sortCol?(sortDir===1?"sort-asc":"sort-desc"):"";
+    return`<th class="${cls}" data-col="${c.k}">${c.label}</th>`;
+  }).join("")}</tr>`;
+  document.querySelectorAll("thead th").forEach(th=>th.addEventListener("click",()=>{
+    const col=th.dataset.col;
+    if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
+    render();
+  }));
+}
+
+function renderBody(data){
+  const sorted=sortData(data);
+  document.getElementById("count-info").textContent=`Mostrando ${sorted.length} de ${RAW.length} tickers`;
+  document.getElementById("tbl-body").innerHTML=sorted.map(d=>{
+    const sc=SC[d.sector]||["#F5F5F0","#444441"];
+    const vc=VC[d.veredicto]||["#F5F5F0","#444441"];
+    const rc=RC[d.recom_rsi]||["#F5F5F0","#5F5E5A"];
+    const fzColor=d.recom_fz<=1.5?"#27500A":d.recom_fz<=2?"#185FA5":d.recom_fz<=3?"#5F5E5A":"#A32D2D";
+    const rsiColor=d.rsi>70?"#A32D2D":d.rsi<30?"#27500A":"#1a1a1a";
+    return`<tr>
+      <td><span class="ticker">${d.ticker}</span></td>
+      <td><span class="name-cell" title="${d.name}">${d.name}</span></td>
+      <td>${badge(d.sector,sc)}</td>
+      <td>${fmtP(d.price)}</td>
+      <td>${fmtM(d.mcap)}</td>
+      <td>${pct(d.upside_fz,d.upside_fz>=30?"up-pos":d.upside_fz>=10?"up-mid":"up-neg")}</td>
+      <td>${pct(d.upside_sa,d.upside_sa!==null&&d.upside_sa>=30?"up-pos":d.upside_sa!==null&&d.upside_sa>=10?"up-mid":"up-neg")}</td>
+      <td>${pct(d.ath_disc,d.ath_disc>=0?"up-pos":"up-neg")}</td>
+      <td>${badge(d.veredicto,vc)}</td>
+      <td>${piotr(d.piotroski)}</td>
+      <td>${d.altman!==null?d.altman.toFixed(2):'<span class="na">–</span>'}</td>
+      <td style="font-weight:600;color:${rsiColor}">${d.rsi!==null?d.rsi.toFixed(1):'<span class="na">–</span>'}</td>
+      <td>${badge(d.recom_rsi,rc)}</td>
+      <td style="font-weight:600;color:${fzColor}">${d.recom_fz!==null?d.recom_fz.toFixed(2):'<span class="na">–</span>'}</td>
+      <td style="font-weight:600">${d.recom_sa!==null?d.recom_sa:'<span class="na">–</span>'}</td>
+    </tr>`;
+  }).join("");
+}
+
+function populateFilters(){
+  const sectors=[...new Set(RAW.map(r=>r[2]))].sort();
+  const vOrder=["OPORTUNIDAD","Buena","Neutral","Evitar"];
+  const rOrder=["Compra","Compra Fuerte","Neutral","Venta","Venta Fuerte"];
+  const recoms=[...new Set(RAW.map(r=>r[12]).filter(Boolean))];
+  const sf=document.getElementById("f-sector");
+  sectors.forEach(s=>sf.innerHTML+=`<option value="${s}">${s}</option>`);
+  const vf=document.getElementById("f-veredicto");
+  vOrder.forEach(v=>vf.innerHTML+=`<option value="${v}">${v}</option>`);
+  const rf=document.getElementById("f-recom");
+  rOrder.filter(r=>recoms.includes(r)).forEach(r=>rf.innerHTML+=`<option value="${r}">${r}</option>`);
+}
+
+function render(){
+  const data=getData();
+  renderSummary(data);renderHead();renderBody(data);
+}
+
+function init(){
+  populateFilters();
+  const slider=document.getElementById("f-upside");
+  const lbl=document.getElementById("upside-lbl");
+  slider.addEventListener("input",()=>{lbl.textContent=slider.value+"%";render();});
+  lbl.textContent=slider.value+"%";
+  ["f-sector","f-veredicto","f-recom"].forEach(id=>document.getElementById(id).addEventListener("change",render));
+  render();
+}
+init();
+</script>
+</body>
+</html>
