@@ -8,14 +8,24 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 13px; }
 
-  header { background: #fff; border-bottom: 1px solid #e8e8e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-  header span { font-size: 12px; color: #888; }
+  header { background: #fff; border-bottom: 1px solid #e8e8e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  header h1 { font-size: 18px; font-weight: 700; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  #status { font-size: 12px; color: #888; }
+  #reload-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
+  #reload-btn:hover { background: #f5f5f0; }
+
+  .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #888; font-size: 14px; gap: 10px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid #e8e8e4; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box { margin: 24px; padding: 16px 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; font-size: 13px; color: #856404; }
+  .error-box a { color: #0d6efd; }
 
   .summary-cards { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
   .card { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 14px 18px; min-width: 150px; flex: 1; }
   .card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .card .value { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+  .card .value { font-size: 22px; font-weight: 700; }
 
   .filters { display: flex; gap: 12px; padding: 0 24px 14px; align-items: center; flex-wrap: wrap; }
   .filters label { font-size: 12px; color: #555; margin-right: 4px; }
@@ -23,7 +33,7 @@
   .filter-group { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; }
   .filter-group input[type=range] { width: 110px; accent-color: #16a34a; }
   .filter-group .upside-val { font-size: 12px; font-weight: 600; min-width: 42px; }
-  .reset-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; color: #555; }
+  .reset-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
   .reset-btn:hover { background: #f5f5f0; }
 
   .table-wrap { padding: 0 24px 24px; overflow-x: auto; }
@@ -70,155 +80,217 @@
   .c-lgreen { color: #22c55e; }
   .c-red { color: #dc2626; font-weight: 600; }
   .c-amber { color: #d97706; }
-  .c-blue { color: #2563eb; }
   .c-na { color: #bbb; }
 
   #row-count { font-size: 12px; color: #888; padding: 0 24px 8px; }
+
+  /* Configuración sheet */
+  .sheet-config { margin: 0 24px 12px; padding: 10px 14px; background: #fff; border: 1px solid #e8e8e4; border-radius: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .sheet-config input { border: 1px solid #e8e8e4; border-radius: 6px; padding: 5px 10px; font-size: 12px; flex: 1; min-width: 300px; }
+  .sheet-config button { padding: 5px 12px; font-size: 12px; background: #16a34a; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  .sheet-config small { color: #888; font-size: 11px; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>📊 Dashboard de Análisis de Acciones</h1>
-  <span>Datos: 31/05/2026 · Fuente: Google Sheets</span>
+  <div class="header-right">
+    <span id="status">Cargando datos...</span>
+    <button id="reload-btn" onclick="loadData()">↺ Recargar</button>
+  </div>
 </header>
 
-<div class="summary-cards">
-  <div class="card"><div class="label">Total Tickers</div><div class="value" id="sum-total">—</div></div>
-  <div class="card"><div class="label">Oportunidades</div><div class="value c-green" id="sum-op">—</div></div>
-  <div class="card"><div class="label">Upside Prom. FZ</div><div class="value c-blue" id="sum-upside">—</div></div>
-  <div class="card"><div class="label">Piotroski Prom.</div><div class="value" id="sum-pio">—</div></div>
-  <div class="card"><div class="label">Recom. Compra (FZ≤2)</div><div class="value c-green" id="sum-buy">—</div></div>
+<div class="sheet-config" id="config-bar">
+  <small>📋 Google Sheet CSV URL:</small>
+  <input type="text" id="sheet-url" placeholder="https://docs.google.com/spreadsheets/d/ID/export?format=csv">
+  <button onclick="saveAndLoad()">Cargar</button>
+  <small id="config-hint">El sheet debe estar compartido como "Cualquiera con el enlace puede ver"</small>
 </div>
 
-<div class="filters">
-  <div><label>Sector:</label><select id="f-sector"><option value="">Todos</option></select></div>
-  <div><label>Veredicto:</label>
-    <select id="f-veredicto">
-      <option value="">Todos</option>
-      <option>OPORTUNIDAD</option><option>Buena</option><option>Neutral</option><option>Riesgo</option><option>Evitar</option>
-    </select>
+<div id="main-content" style="display:none">
+  <div class="summary-cards">
+    <div class="card"><div class="label">Total Tickers</div><div class="value" id="sum-total">—</div></div>
+    <div class="card"><div class="label">Oportunidades</div><div class="value c-green" id="sum-op">—</div></div>
+    <div class="card"><div class="label">Upside Prom. FZ</div><div class="value" style="color:#2563eb" id="sum-upside">—</div></div>
+    <div class="card"><div class="label">Piotroski Prom.</div><div class="value" id="sum-pio">—</div></div>
+    <div class="card"><div class="label">Recom. Compra (FZ≤2)</div><div class="value c-green" id="sum-buy">—</div></div>
   </div>
-  <div class="filter-group">
-    <label>Upside mín. FZ:</label>
-    <input type="range" id="f-upside" min="-50" max="100" value="-50" step="5">
-    <span class="upside-val" id="f-upside-val">–</span>
+
+  <div class="filters">
+    <div><label>Sector:</label><select id="f-sector"><option value="">Todos</option></select></div>
+    <div><label>Veredicto:</label>
+      <select id="f-veredicto">
+        <option value="">Todos</option>
+        <option>OPORTUNIDAD</option><option>Buena</option><option>Neutral</option><option>Riesgo</option><option>Evitar</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Upside mín. FZ:</label>
+      <input type="range" id="f-upside" min="-100" max="200" value="-100" step="5">
+      <span class="upside-val" id="f-upside-val">–</span>
+    </div>
+    <button class="reset-btn" onclick="resetFilters()">↺ Resetear</button>
   </div>
-  <button class="reset-btn" onclick="resetFilters()">↺ Resetear</button>
+
+  <div id="row-count"></div>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th onclick="sortBy('ticker')">TICKER<span class="sort-icon" id="i-ticker">↕</span></th>
+      <th onclick="sortBy('name')">NOMBRE<span class="sort-icon" id="i-name">↕</span></th>
+      <th onclick="sortBy('sector')">SECTOR<span class="sort-icon" id="i-sector">↕</span></th>
+      <th onclick="sortBy('price')">PRECIO<span class="sort-icon" id="i-price">↕</span></th>
+      <th onclick="sortBy('mcap')">MKT CAP<span class="sort-icon" id="i-mcap">↕</span></th>
+      <th onclick="sortBy('size')">TAMAÑO<span class="sort-icon" id="i-size">↕</span></th>
+      <th onclick="sortBy('beta')">BETA<span class="sort-icon" id="i-beta">↕</span></th>
+      <th onclick="sortBy('roe')">ROE<span class="sort-icon" id="i-roe">↕</span></th>
+      <th onclick="sortBy('roic')">ROIC<span class="sort-icon" id="i-roic">↕</span></th>
+      <th onclick="sortBy('wacc')">WACC<span class="sort-icon" id="i-wacc">↕</span></th>
+      <th onclick="sortBy('eps_hist')">EPS 5Y<span class="sort-icon" id="i-eps_hist">↕</span></th>
+      <th onclick="sortBy('upside_fz')">UPSIDE FZ<span class="sort-icon" id="i-upside_fz">↕</span></th>
+      <th onclick="sortBy('upside_sa')">UPSIDE SA<span class="sort-icon" id="i-upside_sa">↕</span></th>
+      <th onclick="sortBy('ath_disc')">ATH DISC<span class="sort-icon" id="i-ath_disc">↕</span></th>
+      <th onclick="sortBy('veredicto')">VEREDICTO<span class="sort-icon" id="i-veredicto">↕</span></th>
+      <th onclick="sortBy('piotroski')">PIOTROSKI<span class="sort-icon" id="i-piotroski">↕</span></th>
+      <th onclick="sortBy('altman')">ALTMAN Z<span class="sort-icon" id="i-altman">↕</span></th>
+      <th onclick="sortBy('rsi')">RSI<span class="sort-icon" id="i-rsi">↕</span></th>
+      <th onclick="sortBy('recom_fz')">RECOM FZ<span class="sort-icon" id="i-recom_fz">↕</span></th>
+      <th onclick="sortBy('recom_sa')">RECOM SA<span class="sort-icon" id="i-recom_sa">↕</span></th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  </div>
 </div>
 
-<div id="row-count"></div>
-
-<div class="table-wrap">
-<table>
-  <thead><tr>
-    <th onclick="sortBy('ticker')">TICKER<span class="sort-icon" id="i-ticker">↕</span></th>
-    <th onclick="sortBy('name')">NOMBRE<span class="sort-icon" id="i-name">↕</span></th>
-    <th onclick="sortBy('sector')">SECTOR<span class="sort-icon" id="i-sector">↕</span></th>
-    <th onclick="sortBy('price')">PRECIO<span class="sort-icon" id="i-price">↕</span></th>
-    <th onclick="sortBy('mcap')">MKT CAP<span class="sort-icon" id="i-mcap">↕</span></th>
-    <th onclick="sortBy('size')">TAMAÑO<span class="sort-icon" id="i-size">↕</span></th>
-    <th onclick="sortBy('beta')">BETA<span class="sort-icon" id="i-beta">↕</span></th>
-    <th onclick="sortBy('roe')">ROE<span class="sort-icon" id="i-roe">↕</span></th>
-    <th onclick="sortBy('roic')">ROIC<span class="sort-icon" id="i-roic">↕</span></th>
-    <th onclick="sortBy('wacc')">WACC<span class="sort-icon" id="i-wacc">↕</span></th>
-    <th onclick="sortBy('eps_hist')">EPS 5Y<span class="sort-icon" id="i-eps_hist">↕</span></th>
-    <th onclick="sortBy('upside_fz')">UPSIDE FZ<span class="sort-icon" id="i-upside_fz">↕</span></th>
-    <th onclick="sortBy('upside_sa')">UPSIDE SA<span class="sort-icon" id="i-upside_sa">↕</span></th>
-    <th onclick="sortBy('ath_disc')">ATH DISC<span class="sort-icon" id="i-ath_disc">↕</span></th>
-    <th onclick="sortBy('veredicto')">VEREDICTO<span class="sort-icon" id="i-veredicto">↕</span></th>
-    <th onclick="sortBy('piotroski')">PIOTROSKI<span class="sort-icon" id="i-piotroski">↕</span></th>
-    <th onclick="sortBy('altman')">ALTMAN Z<span class="sort-icon" id="i-altman">↕</span></th>
-    <th onclick="sortBy('rsi')">RSI<span class="sort-icon" id="i-rsi">↕</span></th>
-    <th onclick="sortBy('recom_fz')">RECOM FZ<span class="sort-icon" id="i-recom_fz">↕</span></th>
-    <th onclick="sortBy('recom_sa')">RECOM SA<span class="sort-icon" id="i-recom_sa">↕</span></th>
-  </tr></thead>
-  <tbody id="tbody"></tbody>
-</table>
+<div id="loading-div" class="loading" style="display:none">
+  <div class="spinner"></div><span id="loading-msg">Leyendo Google Sheet...</span>
 </div>
+<div id="error-div" style="display:none"></div>
 
 <script>
-const DATA = [
-  {ticker:'CAI',name:'Caris Life Sciences Inc',sector:'Healthcare',price:16.72,mcap:4.73,size:'Mid Cap',beta:null,roe:28.35,roic:3.34,wacc:null,eps_hist:-7.57,upside_fz:26.67,upside_sa:67.46,ath_disc:-60.66,veredicto:'Neutral',piotroski:5,altman:7.03,rsi:48.74,recom_fz:1.38,recom_sa:1},
-  {ticker:'DASH',name:'DoorDash Inc',sector:'Consumer Cyclical',price:159.29,mcap:69.41,size:'Large Cap',beta:1.82,roe:9.96,roic:6.92,wacc:13.88,eps_hist:null,upside_fz:56.19,upside_sa:54.43,ath_disc:-44.21,veredicto:'Neutral',piotroski:5,altman:6.64,rsi:47.52,recom_fz:1.49,recom_sa:2},
-  {ticker:'BABA',name:'Alibaba Group Holding Ltd ADR',sector:'Consumer Cyclical',price:124.22,mcap:298.02,size:'Mega Cap',beta:0.48,roe:10.16,roic:7.84,wacc:6.43,eps_hist:-4.77,upside_fz:54.91,upside_sa:54.33,ath_disc:-35.53,veredicto:'Neutral',piotroski:3,altman:3.0,rsi:37.68,recom_fz:1.35,recom_sa:1},
-  {ticker:'UBER',name:'Uber Technologies Inc',sector:'Technology',price:70.4,mcap:143.31,size:'Large Cap',beta:1.12,roe:36.55,roic:23.10,wacc:10.00,eps_hist:null,upside_fz:49.39,upside_sa:48.37,ath_disc:-30.97,veredicto:'Neutral',piotroski:6,altman:4.16,rsi:37.79,recom_fz:1.33,recom_sa:1},
-  {ticker:'NU',name:'Nu Holdings Ltd',sector:'Financial',price:13.13,mcap:63.82,size:'Large Cap',beta:0.95,roe:30.04,roic:21.32,wacc:8.93,eps_hist:null,upside_fz:44.94,upside_sa:47.68,ath_disc:-30.82,veredicto:'Neutral',piotroski:2,altman:null,rsi:44.53,recom_fz:1.33,recom_sa:1},
-  {ticker:'VST',name:'Vistra Corp',sector:'Utilities',price:160.23,mcap:54.03,size:'Large Cap',beta:1.42,roe:43.01,roic:9.80,wacc:10.04,eps_hist:null,upside_fz:45.53,upside_sa:40.60,ath_disc:-27.11,veredicto:'Neutral',piotroski:6,altman:null,rsi:56.73,recom_fz:1.35,recom_sa:1},
-  {ticker:'NVDA',name:'NVIDIA Corp',sector:'Technology',price:211.14,mcap:5109.59,size:'Mega Cap',beta:2.22,roe:114.29,roic:77.17,wacc:16.55,eps_hist:95.27,upside_fz:45.48,upside_sa:40.57,ath_disc:-10.74,veredicto:'Neutral',piotroski:6,altman:44.16,rsi:49.41,recom_fz:1.27,recom_sa:1},
-  {ticker:'SONY',name:'Sony Group Corp ADR',sector:'Technology',price:21.57,mcap:127.43,size:'Large Cap',beta:0.94,roe:13.02,roic:-3.23,wacc:7.92,eps_hist:null,upside_fz:40.33,upside_sa:36.21,ath_disc:-28.91,veredicto:'Neutral',piotroski:7,altman:3.59,rsi:49.80,recom_fz:1.22,recom_sa:2},
-  {ticker:'CRM',name:'Salesforce Inc',sector:'Technology',price:191.1,mcap:156.51,size:'Large Cap',beta:1.13,roe:16.91,roic:10.56,wacc:8.50,eps_hist:234.40,upside_fz:29.83,upside_sa:33.73,ath_disc:-30.96,veredicto:'Neutral',piotroski:6,altman:2.80,rsi:60.51,recom_fz:1.64,recom_sa:2},
-  {ticker:'TMUS',name:'T-Mobile US Inc',sector:'Communication Services',price:187.53,mcap:202.95,size:'Mega Cap',beta:0.31,roe:18.02,roic:6.20,wacc:4.67,eps_hist:29.65,upside_fz:38.16,upside_sa:39.08,ath_disc:-28.30,veredicto:'Neutral',piotroski:5,altman:1.85,rsi:41.67,recom_fz:1.43,recom_sa:2},
-  {ticker:'CRCL',name:'Circle Internet Group Inc',sector:'Financial',price:113,mcap:28.09,size:'Large Cap',beta:null,roe:-2.98,roic:-2.30,wacc:null,eps_hist:56.37,upside_fz:28.47,upside_sa:29.03,ath_disc:-62.21,veredicto:'Neutral',piotroski:3,altman:0.26,rsi:52.43,recom_fz:2.17,recom_sa:2},
-  {ticker:'CMG',name:'Chipotle Mexican Grill',sector:'Consumer Cyclical',price:31.86,mcap:40.87,size:'Large Cap',beta:1.0,roe:49.23,roic:19.77,wacc:8.79,eps_hist:35.50,upside_fz:36.28,upside_sa:36.16,ath_disc:-45.46,veredicto:'Neutral',piotroski:5,altman:7.41,rsi:41.49,recom_fz:1.75,recom_sa:2},
-  {ticker:'NFLX',name:'Netflix Inc',sector:'Communication Services',price:86.02,mcap:362.21,size:'Mega Cap',beta:1.5,roe:48.50,roic:28.80,wacc:12.39,eps_hist:32.98,upside_fz:35.24,upside_sa:33.18,ath_disc:-35.86,veredicto:'Buena',piotroski:7,altman:11.91,rsi:37.12,recom_fz:1.64,recom_sa:2},
-  {ticker:'BKNG',name:'Booking Holdings Inc',sector:'Consumer Cyclical',price:167.43,mcap:129.74,size:'Large Cap',beta:1.08,roe:null,roic:85.42,wacc:9.63,eps_hist:158.57,upside_fz:34.52,upside_sa:34.03,ath_disc:-28.32,veredicto:'Neutral',piotroski:6,altman:7.03,rsi:52.37,recom_fz:1.44,recom_sa:2},
-  {ticker:'MA',name:'Mastercard Incorporated',sector:'Financial',price:493.98,mcap:436.47,size:'Mega Cap',beta:0.74,roe:232.56,roic:65.06,wacc:8.20,eps_hist:null,upside_fz:31.66,upside_sa:30.97,ath_disc:-17.91,veredicto:'Neutral',piotroski:6,altman:10.82,rsi:45.55,recom_fz:1.27,recom_sa:1},
-  {ticker:'MELI',name:'MercadoLibre Inc',sector:'Consumer Cyclical',price:1695.65,mcap:85.96,size:'Large Cap',beta:1.36,roe:31.26,roic:13.69,wacc:10.61,eps_hist:60.24,upside_fz:32.37,upside_sa:31.53,ath_disc:-35.90,veredicto:'Neutral',piotroski:4,altman:2.89,rsi:49.98,recom_fz:1.38,recom_sa:2},
-  {ticker:'ADBE',name:'Adobe Inc',sector:'Technology',price:259.21,mcap:104.77,size:'Large Cap',beta:1.4,roe:58.77,roic:42.01,wacc:11.51,eps_hist:null,upside_fz:23.28,upside_sa:26.26,ath_disc:-38.50,veredicto:'Neutral',piotroski:7,altman:8.92,rsi:58.75,recom_fz:2.41,recom_sa:3},
-  {ticker:'AZO',name:'Autozone Inc',sector:'Consumer Cyclical',price:2935.19,mcap:48.36,size:'Large Cap',beta:0.36,roe:null,roic:26.06,wacc:5.88,eps_hist:null,upside_fz:34.21,upside_sa:33.11,ath_disc:-33.11,veredicto:'Neutral',piotroski:3,altman:null,rsi:24.28,recom_fz:1.53,recom_sa:2},
-  {ticker:'MSFT',name:'Microsoft Corp',sector:'Technology',price:450.24,mcap:3344.58,size:'Mega Cap',beta:1.09,roe:34.01,roic:24.02,wacc:9.96,eps_hist:null,upside_fz:24.23,upside_sa:24.52,ath_disc:-18.94,veredicto:'Neutral',piotroski:5,altman:9.28,rsi:69.59,recom_fz:1.25,recom_sa:1},
-  {ticker:'LULU',name:'Lululemon Athletica Inc',sector:'Consumer Cyclical',price:131.18,mcap:15.68,size:'Large Cap',beta:0.88,roe:34.01,roic:24.44,wacc:8.21,eps_hist:25.70,upside_fz:30.60,upside_sa:34.90,ath_disc:-61.45,veredicto:'Neutral',piotroski:5,altman:8.16,rsi:46.13,recom_fz:2.85,recom_sa:3},
-  {ticker:'CEG',name:'Constellation Energy Corp',sector:'Utilities',price:287.75,mcap:103.93,size:'Large Cap',beta:1.09,roe:16.33,roic:7.51,wacc:9.06,eps_hist:32.58,upside_fz:29.36,upside_sa:27.10,ath_disc:-30.28,veredicto:'Neutral',piotroski:4,altman:null,rsi:48.45,recom_fz:1.5,recom_sa:2},
-  {ticker:'META',name:'Meta Platforms Inc',sector:'Communication Services',price:632.51,mcap:1605.58,size:'Mega Cap',beta:1.23,roe:32.93,roic:21.52,wacc:10.59,eps_hist:39.86,upside_fz:29.62,upside_sa:30.71,ath_disc:-20.56,veredicto:'Neutral',piotroski:5,altman:8.65,rsi:55.36,recom_fz:1.29,recom_sa:1},
-  {ticker:'CRWV',name:'CoreWeave Inc',sector:'Technology',price:109.53,mcap:59.76,size:'Large Cap',beta:7.14,roe:-40.69,roic:-5.00,wacc:null,eps_hist:-231.46,upside_fz:26.48,upside_sa:26.81,ath_disc:-41.43,veredicto:'Neutral',piotroski:2,altman:0.36,rsi:51.05,recom_fz:1.92,recom_sa:2},
-  {ticker:'TTWO',name:'Take-Two Interactive Software Inc',sector:'Communication Services',price:224.16,mcap:41.62,size:'Large Cap',beta:0.97,roe:-10.56,roic:-4.68,wacc:9.23,eps_hist:38.68,upside_fz:25.48,upside_sa:24.68,ath_disc:-15.34,veredicto:'Neutral',piotroski:6,altman:4.01,rsi:50.64,recom_fz:1.24,recom_sa:1},
-  {ticker:'NOW',name:'ServiceNow Inc',sector:'Technology',price:124.37,mcap:128.26,size:'Large Cap',beta:0.88,roe:16.07,roic:12.51,wacc:8.61,eps_hist:70.18,upside_fz:13.07,upside_sa:15.22,ath_disc:-41.19,veredicto:'Neutral',piotroski:5,altman:9.30,rsi:73.58,recom_fz:1.37,recom_sa:2},
-  {ticker:'DIS',name:'Walt Disney Co',sector:'Communication Services',price:101.83,mcap:176.83,size:'Large Cap',beta:1.4,roe:10.54,roic:7.63,wacc:10.12,eps_hist:58.46,upside_fz:30.37,upside_sa:27.16,ath_disc:-18.33,veredicto:'Neutral',piotroski:7,altman:2.37,rsi:45.26,recom_fz:1.32,recom_sa:1},
-  {ticker:'RACE',name:'Ferrari NV',sector:'Consumer Cyclical',price:340.23,mcap:60.05,size:'Large Cap',beta:0.93,roe:43.46,roic:26.92,wacc:7.14,eps_hist:null,upside_fz:29.76,upside_sa:null,ath_disc:-34.46,veredicto:'Neutral',piotroski:7,altman:8.64,rsi:50.61,recom_fz:1.56,recom_sa:1},
-  {ticker:'IREN',name:'IREN Ltd',sector:'Financial',price:63.54,mcap:22.67,size:'Large Cap',beta:4.23,roe:6.69,roic:2.04,wacc:23.30,eps_hist:null,upside_fz:30.39,upside_sa:25.65,ath_disc:-17.34,veredicto:'Neutral',piotroski:5,altman:1.42,rsi:60.42,recom_fz:1.88,recom_sa:2},
-  {ticker:'NTRA',name:'Natera Inc',sector:'Healthcare',price:223.37,mcap:31.99,size:'Large Cap',beta:1.55,roe:-15.02,roic:-11.79,wacc:12.78,eps_hist:35.09,upside_fz:16.80,upside_sa:16.80,ath_disc:-12.87,veredicto:'Neutral',piotroski:4,altman:17.65,rsi:62.36,recom_fz:1.30,recom_sa:1},
-  {ticker:'V',name:'Visa Inc',sector:'Financial',price:326.36,mcap:614.9,size:'Mega Cap',beta:0.77,roe:59.80,roic:37.94,wacc:8.32,eps_hist:null,upside_fz:23.00,upside_sa:22.18,ath_disc:-13.09,veredicto:'Neutral',piotroski:7,altman:8.27,rsi:54.04,recom_fz:1.33,recom_sa:1},
-  {ticker:'TLN',name:'Talen Energy Corp',sector:'Utilities',price:386.8,mcap:17.56,size:'Large Cap',beta:1.6,roe:-1.86,roic:-0.27,wacc:9.38,eps_hist:88.13,upside_fz:23.25,upside_sa:22.90,ath_disc:-14.29,veredicto:'Neutral',piotroski:4,altman:null,rsi:58.29,recom_fz:1.31,recom_sa:2},
-  {ticker:'T',name:'AT&T Inc',sector:'Communication Services',price:24.8,mcap:172.32,size:'Large Cap',beta:0.19,roe:20.12,roic:8.24,wacc:5.21,eps_hist:null,upside_fz:22.18,upside_sa:22.46,ath_disc:-16.75,veredicto:'Neutral',piotroski:6,altman:0.95,rsi:41.41,recom_fz:2.0,recom_sa:2},
-  {ticker:'HOOD',name:'Robinhood Markets Inc',sector:'Financial',price:94.3,mcap:84.99,size:'Large Cap',beta:2.31,roe:21.92,roic:19.88,wacc:14.53,eps_hist:259.78,upside_fz:7.15,upside_sa:4.74,ath_disc:-38.71,veredicto:'Neutral',piotroski:5,altman:null,rsi:69.07,recom_fz:1.79,recom_sa:2},
-  {ticker:'RCL',name:'Royal Caribbean Group',sector:'Consumer Cyclical',price:284.63,mcap:76.34,size:'Large Cap',beta:1.77,roe:50.42,roic:14.90,wacc:11.89,eps_hist:null,upside_fz:18.81,upside_sa:18.87,ath_disc:-22.34,veredicto:'Neutral',piotroski:7,altman:2.27,rsi:59.76,recom_fz:1.68,recom_sa:2},
-  {ticker:'ORCL',name:'Oracle Corp',sector:'Technology',price:225.78,mcap:649.35,size:'Mega Cap',beta:1.6,roe:58.71,roic:8.65,wacc:10.64,eps_hist:null,upside_fz:7.94,upside_sa:8.08,ath_disc:-34.69,veredicto:'Neutral',piotroski:5,altman:2.26,rsi:75.09,recom_fz:1.53,recom_sa:2},
-  {ticker:'BLK',name:'Blackrock Inc',sector:'Financial',price:1046.88,mcap:170.47,size:'Large Cap',beta:1.43,roe:11.95,roic:8.73,wacc:11.51,eps_hist:null,upside_fz:19.64,upside_sa:19.52,ath_disc:-14.19,veredicto:'Neutral',piotroski:6,altman:1.66,rsi:46.47,recom_fz:1.42,recom_sa:2},
-  {ticker:'WMT',name:'Walmart Inc',sector:'Consumer Defensive',price:115.75,mcap:922.64,size:'Mega Cap',beta:0.61,roe:25.53,roic:15.01,wacc:7.46,eps_hist:null,upside_fz:21.20,upside_sa:19.16,ath_disc:-14.35,veredicto:'Neutral',piotroski:6,altman:5.99,rsi:28.72,recom_fz:1.5,recom_sa:1},
-  {ticker:'TKO',name:'TKO Group Holdings Inc',sector:'Communication Services',price:205.18,mcap:39.22,size:'Large Cap',beta:0.59,roe:6.01,roic:2.74,wacc:7.13,eps_hist:null,upside_fz:14.24,upside_sa:14.24,ath_disc:-9.59,veredicto:'Neutral',piotroski:6,altman:1.64,rsi:67.31,recom_fz:1.61,recom_sa:2},
-  {ticker:'AMZN',name:'Amazon.com Inc',sector:'Consumer Cyclical',price:270.64,mcap:2911.3,size:'Mega Cap',beta:1.45,roe:24.28,roic:13.93,wacc:11.46,eps_hist:27.96,upside_fz:17.37,upside_sa:15.57,ath_disc:-2.84,veredicto:'Neutral',piotroski:6,altman:4.54,rsi:59.69,recom_fz:1.24,recom_sa:1},
-  {ticker:'SPOT',name:'Spotify Technology SA',sector:'Communication Services',price:497.68,mcap:102.44,size:'Large Cap',beta:1.58,roe:39.60,roic:32.59,wacc:12.76,eps_hist:null,upside_fz:20.87,upside_sa:22.30,ath_disc:-36.60,veredicto:'Neutral',piotroski:6,altman:15.24,rsi:56.88,recom_fz:1.51,recom_sa:2},
-  {ticker:'XOM',name:'Exxon Mobil Corp',sector:'Energy',price:145.26,mcap:602.1,size:'Mega Cap',beta:0.16,roe:9.79,roic:8.80,wacc:4.95,eps_hist:-20.34,upside_fz:17.19,upside_sa:16.47,ath_disc:-17.66,veredicto:'Neutral',piotroski:5,altman:3.89,rsi:38.58,recom_fz:2.31,recom_sa:2},
-  {ticker:'PYPL',name:'PayPal Holdings Inc',sector:'Financial',price:44.75,mcap:39.47,size:'Large Cap',beta:1.35,roe:25.12,roic:16.89,wacc:9.93,eps_hist:37.29,upside_fz:12.74,upside_sa:17.39,ath_disc:-43.71,veredicto:'Neutral',piotroski:6,altman:2.03,rsi:42.61,recom_fz:2.85,recom_sa:3},
-  {ticker:'PG',name:'Procter & Gamble Co',sector:'Consumer Defensive',price:143.56,mcap:334.29,size:'Mega Cap',beta:0.39,roe:31.12,roic:21.21,wacc:5.98,eps_hist:null,upside_fz:13.85,upside_sa:null,ath_disc:-16.04,veredicto:'Neutral',piotroski:6,altman:5.57,rsi:47.61,recom_fz:2.08,recom_sa:2},
-  {ticker:'ADP',name:'Automatic Data Processing Inc',sector:'Technology',price:221.84,mcap:88.68,size:'Large Cap',beta:0.84,roe:71.20,roic:40.82,wacc:8.83,eps_hist:null,upside_fz:10.95,upside_sa:11.04,ath_disc:-32.76,veredicto:'Neutral',piotroski:7,altman:2.40,rsi:59.42,recom_fz:2.81,recom_sa:3},
-  {ticker:'AVGO',name:'Broadcom Inc',sector:'Technology',price:446.77,mcap:2115.31,size:'Mega Cap',beta:1.41,roe:33.37,roic:17.38,wacc:11.94,eps_hist:49.76,upside_fz:7.54,upside_sa:7.88,ath_disc:1.0,veredicto:'Neutral',piotroski:7,altman:10.03,rsi:65.92,recom_fz:1.3,recom_sa:1},
-  {ticker:'LLY',name:'Lilly (Eli) & Co',sector:'Healthcare',price:1105,mcap:1040.62,size:'Mega Cap',beta:0.53,roe:107.64,roic:35.82,wacc:6.61,eps_hist:27.59,upside_fz:13.57,upside_sa:9.96,ath_disc:-3.84,veredicto:'Neutral',piotroski:6,altman:7.62,rsi:69.37,recom_fz:1.52,recom_sa:2},
-  {ticker:'GOOGL',name:'Alphabet Inc',sector:'Communication Services',price:380.34,mcap:4586.91,size:'Mega Cap',beta:1.25,roe:38.88,roic:28.04,wacc:11.01,eps_hist:29.82,upside_fz:14.20,upside_sa:13.25,ath_disc:-6.92,veredicto:'Neutral',piotroski:6,altman:10.03,rsi:52.9,recom_fz:1.38,recom_sa:1},
-  {ticker:'CME',name:'CME Group Inc',sector:'Financial',price:273.54,mcap:99.12,size:'Large Cap',beta:0.23,roe:15.89,roic:14.06,wacc:5.60,eps_hist:null,upside_fz:13.04,upside_sa:12.04,ath_disc:-15.27,veredicto:'Neutral',piotroski:5,altman:0.5,rsi:33.95,recom_fz:2.53,recom_sa:3},
-  {ticker:'YPF',name:'YPF ADR',sector:'Energy',price:53.01,mcap:20.85,size:'Large Cap',beta:1.23,roe:-2.77,roic:-1.58,wacc:2.29,eps_hist:null,upside_fz:7.96,upside_sa:6.92,ath_disc:-1.12,veredicto:'Neutral',piotroski:5,altman:1.59,rsi:75.75,recom_fz:1.46,recom_sa:2},
-  {ticker:'YOU',name:'Clear Secure Inc',sector:'Technology',price:55.45,mcap:7.41,size:'Mid Cap',beta:1.09,roe:81.15,roic:42.15,wacc:9.97,eps_hist:null,upside_fz:14.14,upside_sa:11.81,ath_disc:-11.61,veredicto:'Neutral',piotroski:6,altman:2.86,rsi:46.49,recom_fz:2.25,recom_sa:2},
-  {ticker:'APP',name:'Applovin Corp',sector:'Communication Services',price:613.09,mcap:205.96,size:'Mega Cap',beta:2.44,roe:266.42,roic:65.61,wacc:17.03,eps_hist:null,upside_fz:7.64,upside_sa:5.71,ath_disc:-17.77,veredicto:'Neutral',piotroski:7,altman:21.77,rsi:73.84,recom_fz:1.38,recom_sa:1},
-  {ticker:'KO',name:'Coca-Cola Co',sector:'Consumer Defensive',price:79.01,mcap:339.94,size:'Mega Cap',beta:0.36,roe:45.80,roic:18.85,wacc:5.85,eps_hist:null,upside_fz:10.87,upside_sa:8.92,ath_disc:-4.42,veredicto:'Neutral',piotroski:8,altman:4.85,rsi:47.41,recom_fz:1.62,recom_sa:2},
-  {ticker:'BAH',name:'Booz Allen Hamilton Holding Corp',sector:'Industrials',price:79.18,mcap:9.48,size:'Mid Cap',beta:0.33,roe:80.17,roic:16.36,wacc:5.52,eps_hist:50.35,upside_fz:11.25,upside_sa:18.43,ath_disc:-34.04,veredicto:'Neutral',piotroski:4,altman:4.23,rsi:54.0,recom_fz:3.0,recom_sa:3},
-  {ticker:'CVS',name:'CVS Health Corp',sector:'Healthcare',price:90.98,mcap:116.08,size:'Large Cap',beta:0.63,roe:3.80,roic:1.94,wacc:5.83,eps_hist:-23.94,upside_fz:10.65,upside_sa:12.93,ath_disc:-7.57,veredicto:'Neutral',piotroski:6,altman:2.35,rsi:55.66,recom_fz:1.52,recom_sa:2},
-  {ticker:'LIN',name:'Linde Plc',sector:'Basic Materials',price:497.69,mcap:230.23,size:'Mega Cap',beta:0.73,roe:18.49,roic:12.12,wacc:7.61,eps_hist:25.41,upside_fz:9.07,upside_sa:8.82,ath_disc:-4.53,veredicto:'Neutral',piotroski:6,altman:3.81,rsi:44.36,recom_fz:1.68,recom_sa:2},
-  {ticker:'NBIS',name:'Nebius Group NV',sector:'Technology',price:231.09,mcap:58.15,size:'Large Cap',beta:4.29,roe:14.51,roic:5.00,wacc:9.66,eps_hist:-19.43,upside_fz:7.48,upside_sa:-0.14,ath_disc:-1.13,veredicto:'Neutral',piotroski:5,altman:1.49,rsi:66.92,recom_fz:1.75,recom_sa:2},
-  {ticker:'UNH',name:'Unitedhealth Group Inc',sector:'Healthcare',price:380.31,mcap:345.38,size:'Mega Cap',beta:0.65,roe:12.49,roic:7.11,wacc:7.19,eps_hist:-3.76,upside_fz:5.26,upside_sa:5.11,ath_disc:-5.90,veredicto:'Neutral',piotroski:5,altman:null,rsi:57.75,recom_fz:1.65,recom_sa:2},
-  {ticker:'NET',name:'Cloudflare Inc',sector:'Technology',price:241.82,mcap:85.48,size:'Large Cap',beta:1.67,roe:-5.88,roic:-2.35,wacc:12.93,eps_hist:null,upside_fz:-2.69,upside_sa:-3.16,ath_disc:-6.99,veredicto:'Neutral',piotroski:2,altman:8.93,rsi:63.48,recom_fz:1.95,recom_sa:2},
-  {ticker:'IONQ',name:'IonQ Inc',sector:'Technology',price:72.07,mcap:26.9,size:'Large Cap',beta:3.16,roe:10.75,roic:6.17,wacc:21.01,eps_hist:-69.38,upside_fz:-2.94,upside_sa:-6.15,ath_disc:-14.85,veredicto:'Neutral',piotroski:2,altman:4.86,rsi:75.54,recom_fz:1.54,recom_sa:1}
-];
+// ─── CONFIG ──────────────────────────────────────────────────────────────
+const SHEET_ID = '15Dl0mlbMDUj6w2_gKmji8G88MXDseoAajhxm79FSn_w';
+const DEFAULT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+const LS_KEY = 'sheet_csv_url';
 
-let filtered = [...DATA];
-let sortKey = 'upside_fz', sortDir = -1;
+// ─── COLUMN MAP (0-indexed) ───────────────────────────────────────────────
+const C = {
+  TICKER:0, NAME:1, SECTOR:2, PRICE:3, MCAP:4, SIZE:5,
+  BETA:8, ROE:13, ROIC:14, WACC:15,
+  EPS_HIST:20,
+  UPSIDE_FZ:32, UPSIDE_SA:33, ATH_DISC:34,
+  PIOTROSKI:35, ALTMAN:36, RSI:37,
+  RECOM_FZ:39, RECOM_SA:40,
+  VEREDICTO:50
+};
 
-// Sector dropdown
-const sectors = [...new Set(DATA.map(d => d.sector))].sort();
-const sel = document.getElementById('f-sector');
-sectors.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+let DATA = [], filtered = [], sortKey = 'upside_fz', sortDir = -1;
 
-document.getElementById('f-upside').addEventListener('input', function(){
-  document.getElementById('f-upside-val').textContent = this.value + '%';
-  applyFilters();
+// ─── INIT ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(LS_KEY) || DEFAULT_URL;
+  document.getElementById('sheet-url').value = saved;
+  document.getElementById('f-upside').addEventListener('input', function(){
+    document.getElementById('f-upside-val').textContent = this.value + '%';
+    applyFilters();
+  });
+  document.getElementById('f-sector').addEventListener('change', applyFilters);
+  document.getElementById('f-veredicto').addEventListener('change', applyFilters);
+  loadData();
 });
-document.getElementById('f-sector').addEventListener('change', applyFilters);
-document.getElementById('f-veredicto').addEventListener('change', applyFilters);
+
+function saveAndLoad(){
+  const url = document.getElementById('sheet-url').value.trim();
+  if(url) localStorage.setItem(LS_KEY, url);
+  loadData();
+}
+
+// ─── LOAD ─────────────────────────────────────────────────────────────────
+async function loadData(){
+  const url = document.getElementById('sheet-url').value.trim() || DEFAULT_URL;
+  showLoading('Leyendo Google Sheet...');
+  try {
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`HTTP ${resp.status} — ¿El sheet es público?`);
+    const text = await resp.text();
+    DATA = parseCSV(text);
+    if(DATA.length === 0) throw new Error('No se encontraron datos con TICKER válido.');
+    initFilters();
+    applyFilters();
+    document.getElementById('main-content').style.display = '';
+    document.getElementById('loading-div').style.display = 'none';
+    document.getElementById('error-div').style.display = 'none';
+    const now = new Date().toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('status').textContent = `${DATA.length} tickers · Actualizado ${now}`;
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+// ─── PARSE CSV ────────────────────────────────────────────────────────────
+function parseCSV(text){
+  const lines = text.split(/\r?\n/);
+  const rows = [];
+  let inQuote = false, row = [], cell = '';
+  for(const line of lines){
+    for(let i = 0; i < line.length; i++){
+      const ch = line[i];
+      if(ch === '"'){ inQuote = !inQuote; }
+      else if(ch === ',' && !inQuote){ row.push(cell); cell = ''; }
+      else { cell += ch; }
+    }
+    if(!inQuote){ row.push(cell); cell = ''; rows.push(row); row = []; }
+    else { cell += '\n'; }
+  }
+
+  const result = [];
+  for(let i = 1; i < rows.length; i++){
+    const r = rows[i];
+    if(!r || !r[C.TICKER] || !r[C.TICKER].trim()) continue;
+    const ticker = r[C.TICKER].trim();
+    if(ticker === 'TICKERS' || ticker === 'ETF') continue; // skip header rows
+    result.push({
+      ticker,
+      name:     r[C.NAME]   || '',
+      sector:   r[C.SECTOR] || '',
+      price:    num(r[C.PRICE]),
+      mcap:     num(r[C.MCAP]),
+      size:     r[C.SIZE]   || '',
+      beta:     num(r[C.BETA]),
+      roe:      pctNum(r[C.ROE]),
+      roic:     pctNum(r[C.ROIC]),
+      wacc:     pctNum(r[C.WACC]),
+      eps_hist: pctNum(r[C.EPS_HIST]),
+      upside_fz: pctNum(r[C.UPSIDE_FZ]),
+      upside_sa: pctNum(r[C.UPSIDE_SA]),
+      ath_disc:  pctNum(r[C.ATH_DISC]),
+      piotroski: num(r[C.PIOTROSKI]),
+      altman:    num(r[C.ALTMAN]),
+      rsi:       num(r[C.RSI]),
+      recom_fz:  num(r[C.RECOM_FZ]),
+      recom_sa:  num(r[C.RECOM_SA]),
+      veredicto: (r[C.VEREDICTO] || '').trim() || 'N/A'
+    });
+  }
+  return result;
+}
+
+function num(v){ if(!v||v.trim()===''||v==='N/A'||v==='ERROR'||v.includes('#')) return null; return parseFloat(v.replace(/[,%]/g,'')) || null; }
+function pctNum(v){ if(!v||v.trim()===''||v==='N/A'||v==='ERROR'||v.includes('#')) return null; return parseFloat(v.replace('%','')) || null; }
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────
+function initFilters(){
+  const sel = document.getElementById('f-sector');
+  const sectors = [...new Set(DATA.map(d=>d.sector).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Todos</option>' + sectors.map(s=>`<option>${s}</option>`).join('');
+}
 
 function resetFilters(){
   document.getElementById('f-sector').value = '';
   document.getElementById('f-veredicto').value = '';
-  document.getElementById('f-upside').value = -50;
+  document.getElementById('f-upside').value = -100;
   document.getElementById('f-upside-val').textContent = '–';
   applyFilters();
 }
@@ -236,54 +308,67 @@ function applyFilters(){
   doSort(); render();
 }
 
+// ─── SORT ─────────────────────────────────────────────────────────────────
 function sortBy(key){
-  if(sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
-  document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+  if(sortKey===key) sortDir*=-1; else{sortKey=key;sortDir=-1;}
+  document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sorted'));
   const icon = document.getElementById('i-'+key);
-  if(icon){ icon.closest('th').classList.add('sorted'); icon.textContent = sortDir===1?'↑':'↓'; }
+  if(icon){ icon.closest('th').classList.add('sorted'); icon.textContent=sortDir===1?'↑':'↓'; }
   doSort(); render();
 }
-
 function doSort(){
-  filtered.sort((a,b) => {
-    let av=a[sortKey], bv=b[sortKey];
-    if(av===null && bv===null) return 0;
+  filtered.sort((a,b)=>{
+    let av=a[sortKey],bv=b[sortKey];
+    if(av===null&&bv===null) return 0;
     if(av===null) return 1; if(bv===null) return -1;
     if(typeof av==='string') return av.localeCompare(bv)*sortDir;
     return (av-bv)*sortDir;
   });
 }
 
-function na(v, fn){ return v===null ? '<span class="c-na">N/A</span>' : fn(v); }
-function pct(v,d=1){ return (v>=0?'+':'')+v.toFixed(d)+'%'; }
+// ─── FORMAT HELPERS ───────────────────────────────────────────────────────
+const na = (v,fn) => v===null?'<span class="c-na">N/A</span>':fn(v);
+const pct = (v,d=1) => (v>=0?'+':'')+v.toFixed(d)+'%';
 
-function fmtUpside(v){ return na(v,v => { let c=v>=30?'c-green':v>=10?'c-lgreen':v>=0?'':'c-red'; return `<span class="${c}" style="${!c?'color:#1a1a1a':''}">${pct(v)}</span>`; }); }
-function fmtROE(v){ return na(v,v => `<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
-function fmtROIC(v){ return na(v,v => `<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
-function fmtWACC(roic,wacc){ return na(wacc, w => { const bad = roic!==null && w>roic; return `<span class="${bad?'c-red':''}" title="${bad?'Destruye valor económico':''}">${w.toFixed(2)}%</span>`; }); }
-function fmtEPS(v){ return na(v, v => `<span class="${v>0?'c-green':'c-red'}">${pct(v)}</span>`); }
-function fmtBeta(v){ return na(v, v => `<span class="${v<1?'c-green':v<=1.5?'':'c-amber'}">${v.toFixed(2)}</span>`); }
-function fmtRSI(v){ return na(v, v => `<span class="${v>70?'c-red':v<30?'c-green':''}">${v.toFixed(1)}</span>`); }
-function fmtRecomFZ(v){ return na(v, v => { let s=v<=1.5?'color:#16a34a;font-weight:600':v<=2?'color:#2563eb':v<=3?'color:#555':'color:#dc2626;font-weight:600'; return `<span style="${s}">${v.toFixed(2)}</span>`; }); }
-function fmtPio(v){ return na(v, v => { let c=v>=7?'pio-green':v>=5?'pio-blue':v>=3?'pio-amber':'pio-red'; return `<span class="pio"><span class="pio-dot ${c}"></span>${v}</span>`; }); }
-function fmtATH(v){ return na(v, v => `<span class="${v>=0?'c-green':'c-red'}">${pct(v)}</span>`); }
-
+function fmtUpside(v){ return na(v,v=>{
+  const c=v>=30?'c-green':v>=10?'c-lgreen':v>=0?'':'c-red';
+  return `<span class="${c}" style="${!c?'color:#1a1a1a':''}">${pct(v)}</span>`;
+}); }
+function fmtROE(v){ return na(v,v=>`<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
+function fmtROIC(v){ return na(v,v=>`<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
+function fmtWACC(roic,wacc){ return na(wacc,w=>{
+  const bad=roic!==null&&w>roic;
+  return `<span class="${bad?'c-red':''}" title="${bad?'Destruye valor: WACC > ROIC':''}">${w.toFixed(2)}%</span>`;
+}); }
+function fmtEPS(v){ return na(v,v=>`<span class="${v>0?'c-green':'c-red'}">${pct(v)}</span>`); }
+function fmtBeta(v){ return na(v,v=>`<span class="${v<1?'c-green':v<=1.5?'':'c-amber'}">${v.toFixed(2)}</span>`); }
+function fmtRSI(v){ return na(v,v=>`<span class="${v>70?'c-red':v<30?'c-green':''}">${v.toFixed(1)}</span>`); }
+function fmtRecomFZ(v){ return na(v,v=>{
+  const s=v<=1.5?'color:#16a34a;font-weight:600':v<=2?'color:#2563eb':v<=3?'color:#555':'color:#dc2626;font-weight:600';
+  return `<span style="${s}">${v.toFixed(2)}</span>`;
+}); }
+function fmtPio(v){ return na(v,v=>{
+  const c=v>=7?'pio-green':v>=5?'pio-blue':v>=3?'pio-amber':'pio-red';
+  return `<span class="pio"><span class="pio-dot ${c}"></span>${v}</span>`;
+}); }
+function fmtATH(v){ return na(v,v=>`<span class="${v>=0?'c-green':'c-red'}">${pct(v)}</span>`); }
 function sectorKey(s){ return (s||'').replace(/\s+/g,''); }
 
 function verdBadge(v){
-  const m={OPORTUNIDAD:'verd-OPORTUNIDAD',Buena:'verd-Buena',Neutral:'verd-Neutral',Riesgo:'verd-Riesgo',Evitar:'verd-Evitar'};
-  return `<span class="badge ${m[v]||'verd-na'}">${v||'N/A'}</span>`;
+  const map={OPORTUNIDAD:'verd-OPORTUNIDAD',Buena:'verd-Buena',Neutral:'verd-Neutral',Riesgo:'verd-Riesgo',Evitar:'verd-Evitar'};
+  return `<span class="badge ${map[v]||'verd-na'}">${v||'N/A'}</span>`;
 }
 
+// ─── RENDER ───────────────────────────────────────────────────────────────
 function render(){
-  document.getElementById('tbody').innerHTML = filtered.map(d => `
+  document.getElementById('tbody').innerHTML = filtered.map(d=>`
     <tr>
       <td><span class="ticker">${d.ticker}</span></td>
       <td><div class="name-cell" title="${d.name}">${d.name}</div></td>
       <td><span class="badge badge-${sectorKey(d.sector)}">${d.sector}</span></td>
-      <td>$${d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td>${d.mcap!=null?d.mcap.toFixed(2)+'B':'N/A'}</td>
-      <td>${d.size||'N/A'}</td>
+      <td>${d.price!=null?'$'+d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'<span class="c-na">N/A</span>'}</td>
+      <td>${d.mcap!=null?d.mcap.toFixed(2)+'B':'<span class="c-na">N/A</span>'}</td>
+      <td>${d.size||'<span class="c-na">N/A</span>'}</td>
       <td>${fmtBeta(d.beta)}</td>
       <td>${fmtROE(d.roe)}</td>
       <td>${fmtROIC(d.roic)}</td>
@@ -303,18 +388,34 @@ function render(){
 
   document.getElementById('sum-total').textContent = filtered.length;
   document.getElementById('sum-op').textContent = filtered.filter(d=>d.veredicto==='OPORTUNIDAD').length;
-  const ups=filtered.filter(d=>d.upside_fz!=null);
-  document.getElementById('sum-upside').textContent = ups.length ? ('+'+( ups.reduce((a,b)=>a+b.upside_fz,0)/ups.length).toFixed(1)+'%') : '—';
-  const pios=filtered.filter(d=>d.piotroski!=null);
-  document.getElementById('sum-pio').textContent = pios.length ? (pios.reduce((a,b)=>a+b.piotroski,0)/pios.length).toFixed(1) : '—';
+  const ups = filtered.filter(d=>d.upside_fz!=null);
+  document.getElementById('sum-upside').textContent = ups.length?('+'+( ups.reduce((a,b)=>a+b.upside_fz,0)/ups.length).toFixed(1)+'%'):'—';
+  const pios = filtered.filter(d=>d.piotroski!=null);
+  document.getElementById('sum-pio').textContent = pios.length?(pios.reduce((a,b)=>a+b.piotroski,0)/pios.length).toFixed(1):'—';
   document.getElementById('sum-buy').textContent = filtered.filter(d=>d.recom_fz!=null&&d.recom_fz<=2).length;
   document.getElementById('row-count').textContent = `Mostrando ${filtered.length} de ${DATA.length} tickers`;
 }
 
-// Init sort
-document.getElementById('i-upside_fz').closest('th').classList.add('sorted');
-document.getElementById('i-upside_fz').textContent = '↓';
-doSort(); render();
+// ─── UI HELPERS ───────────────────────────────────────────────────────────
+function showLoading(msg){
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('error-div').style.display = 'none';
+  document.getElementById('loading-div').style.display = 'flex';
+  document.getElementById('loading-msg').textContent = msg;
+}
+function showError(msg){
+  document.getElementById('loading-div').style.display = 'none';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('error-div').style.display = 'block';
+  document.getElementById('error-div').innerHTML = `
+    <div class="error-box">
+      ⚠️ <strong>No se pudo cargar el sheet:</strong> ${msg}<br><br>
+      <strong>Para que funcione necesitas:</strong><br>
+      1. Abrir el Google Sheet → Compartir → Cambiar a "Cualquiera con el enlace puede ver"<br>
+      2. Copiar esta URL y pegarla arriba:<br>
+      <code>https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0</code>
+    </div>`;
+}
 </script>
 </body>
 </html>
