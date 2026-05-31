@@ -402,3 +402,58 @@ function showError(msg){
 </script>
 </body>
 </html>
+.innerHTML = filtered.map(d=>`
+    <tr>
+      <td><span class="ticker">${d.ticker}</span></td>
+      <td><div class="name-cell" title="${d.name}">${d.name}</div></td>
+      <td><span class="badge badge-${sectorKey(d.sector)}">${d.sector}</span></td>
+      <td>${d.price!=null?'$'+d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'<span class="c-na">N/A</span>'}</td>
+      <td>${d.mcap!=null?d.mcap.toFixed(2)+'B':'<span class="c-na">N/A</span>'}</td>
+      <td>${d.size||'<span class="c-na">N/A</span>'}</td>
+      <td>${fmtBeta(d.beta)}</td>
+      <td>${fmtROE(d.roe)}</td>
+      <td>${fmtROIC(d.roic)}</td>
+      <td>${fmtWACC(d.roic,d.wacc)}</td>
+      <td>${fmtEPS(d.eps_hist)}</td>
+      <td>${fmtUpside(d.upside_fz)}</td>
+      <td>${fmtUpside(d.upside_sa)}</td>
+      <td>${fmtATH(d.ath_disc)}</td>
+      <td>${verdBadge(d.veredicto)}</td>
+      <td>${fmtPio(d.piotroski)}</td>
+      <td>${d.altman!=null?d.altman.toFixed(2):'<span class="c-na">N/A</span>'}</td>
+      <td>${fmtRSI(d.rsi)}</td>
+      <td>${fmtRecomFZ(d.recom_fz)}</td>
+      <td>${d.recom_sa!=null?d.recom_sa:'<span class="c-na">N/A</span>'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('sum-total').textContent = filtered.length;
+  document.getElementById('sum-op').textContent = filtered.filter(d=>d.veredicto==='OPORTUNIDAD').length;
+  const ups = filtered.filter(d=>d.upside_fz!=null);
+  document.getElementById('sum-upside').textContent = ups.length?('+'+( ups.reduce((a,b)=>a+b.upside_fz,0)/ups.length).toFixed(1)+'%'):'—';
+  const pios = filtered.filter(d=>d.piotroski!=null);
+  document.getElementById('sum-pio').textContent = pios.length?(pios.reduce((a,b)=>a+b.piotroski,0)/pios.length).toFixed(1):'—';
+  document.getElementById('sum-buy').textContent = filtered.filter(d=>d.recom_fz!=null&&d.recom_fz<=2).length;
+  document.getElementById('row-count').textContent = `Mostrando ${filtered.length} de ${DATA.length} tickers`;
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────
+function showLoading(msg){
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('error-div').style.display = 'none';
+  document.getElementById('loading-div').style.display = 'flex';
+  document.getElementById('loading-msg').textContent = msg;
+}
+function showError(msg){
+  document.getElementById('loading-div').style.display = 'none';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('error-div').style.display = 'block';
+  document.getElementById('error-div').innerHTML = `
+    <div class="error-box">
+      ⚠️ <strong>No se pudo cargar el sheet:</strong> ${msg}<br><br>
+      El sheet debe estar compartido como "Cualquiera con el enlace puede ver".
+    </div>`;
+}
+</script>
+</body>
+</html>
