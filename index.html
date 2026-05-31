@@ -236,8 +236,8 @@ function parseCSV(text){
     if(ticker === 'TICKERS' || ticker === 'ETF') continue; // skip header rows
     result.push({
       ticker,
-      name:     r[C.NAME]   || '',
-      sector:   r[C.SECTOR] || '',
+      name:     (r[C.NAME]   || '').trim(),
+      sector:   (r[C.SECTOR] || '').trim(),
       price:    num(r[C.PRICE]),
       mcap:     num(r[C.MCAP]),
       size:     r[C.SIZE]   || '',
@@ -285,7 +285,7 @@ function applyFilters(){
   filtered = DATA.filter(d => {
     if(sec && d.sector !== sec) return false;
     if(verd && d.veredicto !== verd) return false;
-    if(d.upside_fz === null || d.upside_fz < minUp) return false;
+    if(minUp > -100 && (d.upside_fz === null || d.upside_fz < minUp)) return false;
     return true;
   });
   doSort(); render();
