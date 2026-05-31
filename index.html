@@ -5,107 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Análisis de Acciones</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 13px; }
-
-  header { background: #fff; border-bottom: 1px solid #e8e8e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  header h1 { font-size: 18px; font-weight: 700; }
-  .header-right { display: flex; align-items: center; gap: 12px; }
-  #status { font-size: 12px; color: #888; }
-  #reload-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
-  #reload-btn:hover { background: #f5f5f0; }
-
-  .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #888; font-size: 14px; gap: 10px; }
-  .spinner { width: 20px; height: 20px; border: 2px solid #e8e8e4; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .error-box { margin: 24px; padding: 16px 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; font-size: 13px; color: #856404; }
-  .error-box a { color: #0d6efd; }
-
-  .summary-cards { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
-  .card { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 14px 18px; min-width: 150px; flex: 1; }
-  .card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .card .value { font-size: 22px; font-weight: 700; }
-
-  .filters { display: flex; gap: 12px; padding: 0 24px 14px; align-items: center; flex-wrap: wrap; }
-  .filters label { font-size: 12px; color: #555; margin-right: 4px; }
-  .filters select { border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; font-size: 12px; background: #fff; cursor: pointer; }
-  .filter-group { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; }
-  .filter-group input[type=range] { width: 110px; accent-color: #16a34a; }
-  .filter-group .upside-val { font-size: 12px; font-weight: 600; min-width: 42px; }
-  .reset-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
-  .reset-btn:hover { background: #f5f5f0; }
-
-  .table-wrap { padding: 0 24px 24px; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; overflow: hidden; }
-  thead th { background: #f8f8f6; border-bottom: 1px solid #e8e8e4; padding: 10px 10px; text-align: left; font-size: 11px; font-weight: 600; color: #555; white-space: nowrap; cursor: pointer; user-select: none; }
-  thead th:hover { background: #f0f0ec; }
-  thead th.sorted { color: #1a1a1a; }
-  .sort-icon { margin-left: 3px; color: #bbb; font-size: 10px; }
-  thead th.sorted .sort-icon { color: #16a34a; }
-  tbody tr { border-bottom: 1px solid #f0f0ec; }
-  tbody tr:hover { background: #fafaf8; }
-  tbody td { padding: 9px 10px; white-space: nowrap; vertical-align: middle; }
-
-  .ticker { font-weight: 700; font-size: 13px; }
-  .name-cell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; color: #444; font-size: 12px; }
-
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-  .badge-Technology { background: #eff6ff; color: #1d4ed8; }
-  .badge-CommunicationServices { background: #f0fdf4; color: #15803d; }
-  .badge-Financial { background: #fdf4ff; color: #7e22ce; }
-  .badge-Healthcare { background: #fff7ed; color: #c2410c; }
-  .badge-ConsumerCyclical { background: #fefce8; color: #a16207; }
-  .badge-ConsumerDefensive { background: #ecfdf5; color: #166534; }
-  .badge-Energy { background: #fef2f2; color: #b91c1c; }
-  .badge-Utilities { background: #f0f9ff; color: #0369a1; }
-  .badge-Industrials { background: #fff1f2; color: #be123c; }
-  .badge-BasicMaterials { background: #fefce8; color: #713f12; }
-
-  .verd-OPORTUNIDAD { background: #dcfce7; color: #15803d; font-weight: 700; }
-  .verd-Buena { background: #ccfbf1; color: #0f766e; font-weight: 600; }
-  .verd-Neutral { background: #f3f4f6; color: #4b5563; }
-  .verd-Riesgo { background: #fef9c3; color: #92400e; }
-  .verd-Evitar { background: #fee2e2; color: #b91c1c; font-weight: 700; }
-  .verd-na { background: #f3f4f6; color: #9ca3af; }
-
-  .pio { display: inline-flex; align-items: center; gap: 5px; }
-  .pio-dot { width: 9px; height: 9px; border-radius: 50%; }
-  .pio-green { background: #16a34a; }
-  .pio-blue { background: #2563eb; }
-  .pio-amber { background: #d97706; }
-  .pio-red { background: #dc2626; }
-
-  .c-green { color: #16a34a; font-weight: 600; }
-  .c-lgreen { color: #22c55e; }
-  .c-red { color: #dc2626; font-weight: 600; }
-  .c-amber { color: #d97706; }
-  .c-na { color: #bbb; }
-
-  #row-count { font-size: 12px; color: #888; padding: 0 24px 8px; }
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 13px; }
+header { background: #fff; border-bottom: 1px solid #e8e8e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+header h1 { font-size: 18px; font-weight: 700; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+#status { font-size: 12px; color: #888; }
+#reload-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
+.loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #888; font-size: 14px; gap: 10px; }
+.spinner { width: 20px; height: 20px; border: 2px solid #e8e8e4; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box { margin: 24px; padding: 16px 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; font-size: 13px; color: #856404; }
+.summary-cards { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
+.card { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 14px 18px; min-width: 150px; flex: 1; }
+.card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.card .value { font-size: 22px; font-weight: 700; }
+.filters { display: flex; gap: 12px; padding: 0 24px 14px; align-items: center; flex-wrap: wrap; }
+.filters label { font-size: 12px; color: #555; margin-right: 4px; }
+.filters select { border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; font-size: 12px; background: #fff; cursor: pointer; }
+.filter-group { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; }
+.filter-group input[type=range] { width: 110px; accent-color: #16a34a; }
+.filter-group .upside-val { font-size: 12px; font-weight: 600; min-width: 42px; }
+.reset-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
+.table-wrap { padding: 0 24px 24px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; overflow: hidden; }
+thead th { background: #f8f8f6; border-bottom: 1px solid #e8e8e4; padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #555; white-space: nowrap; cursor: pointer; user-select: none; }
+thead th:hover { background: #f0f0ec; }
+thead th.sorted { color: #1a1a1a; }
+.sort-icon { margin-left: 3px; color: #bbb; font-size: 10px; }
+thead th.sorted .sort-icon { color: #16a34a; }
+tbody tr { border-bottom: 1px solid #f0f0ec; }
+tbody tr:hover { background: #fafaf8; }
+tbody td { padding: 9px 10px; white-space: nowrap; vertical-align: middle; }
+.ticker { font-weight: 700; }
+.name-cell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; color: #444; font-size: 12px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-Technology { background: #eff6ff; color: #1d4ed8; }
+.badge-CommunicationServices { background: #f0fdf4; color: #15803d; }
+.badge-Financial { background: #fdf4ff; color: #7e22ce; }
+.badge-Healthcare { background: #fff7ed; color: #c2410c; }
+.badge-ConsumerCyclical { background: #fefce8; color: #a16207; }
+.badge-ConsumerDefensive { background: #ecfdf5; color: #166534; }
+.badge-Energy { background: #fef2f2; color: #b91c1c; }
+.badge-Utilities { background: #f0f9ff; color: #0369a1; }
+.badge-Industrials { background: #fff1f2; color: #be123c; }
+.badge-BasicMaterials { background: #fefce8; color: #713f12; }
+.verd-OPORTUNIDAD { background: #dcfce7; color: #15803d; font-weight: 700; }
+.verd-Buena { background: #ccfbf1; color: #0f766e; font-weight: 600; }
+.verd-Neutral { background: #f3f4f6; color: #4b5563; }
+.verd-Riesgo { background: #fef9c3; color: #92400e; }
+.verd-Evitar { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+.verd-na { background: #f3f4f6; color: #9ca3af; }
+.pio { display: inline-flex; align-items: center; gap: 5px; }
+.pio-dot { width: 9px; height: 9px; border-radius: 50%; }
+.pio-green { background: #16a34a; }
+.pio-blue { background: #2563eb; }
+.pio-amber { background: #d97706; }
+.pio-red { background: #dc2626; }
+.c-green { color: #16a34a; font-weight: 600; }
+.c-lgreen { color: #22c55e; }
+.c-red { color: #dc2626; font-weight: 600; }
+.c-amber { color: #d97706; }
+.c-na { color: #bbb; }
+#row-count { font-size: 12px; color: #888; padding: 0 24px 8px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📊 Dashboard de Análisis de Acciones</h1>
+  <h1>&#128202; Dashboard de An&#225;lisis de Acciones</h1>
   <div class="header-right">
     <span id="status">Cargando datos...</span>
-    <button id="reload-btn" onclick="loadData()">↺ Recargar</button>
+    <button id="reload-btn" onclick="loadData()">&#8635; Recargar</button>
   </div>
 </header>
 
-
 <div id="main-content" style="display:none">
   <div class="summary-cards">
-    <div class="card"><div class="label">Total Tickers</div><div class="value" id="sum-total">—</div></div>
-    <div class="card"><div class="label">Oportunidades</div><div class="value c-green" id="sum-op">—</div></div>
-    <div class="card"><div class="label">Upside Prom. FZ</div><div class="value" style="color:#2563eb" id="sum-upside">—</div></div>
-    <div class="card"><div class="label">Piotroski Prom.</div><div class="value" id="sum-pio">—</div></div>
-    <div class="card"><div class="label">Recom. Compra (FZ≤2)</div><div class="value c-green" id="sum-buy">—</div></div>
+    <div class="card"><div class="label">Total Tickers</div><div class="value" id="sum-total">&#8212;</div></div>
+    <div class="card"><div class="label">Oportunidades</div><div class="value c-green" id="sum-op">&#8212;</div></div>
+    <div class="card"><div class="label">Upside Prom. FZ</div><div class="value" style="color:#2563eb" id="sum-upside">&#8212;</div></div>
+    <div class="card"><div class="label">Piotroski Prom.</div><div class="value" id="sum-pio">&#8212;</div></div>
+    <div class="card"><div class="label">Recom. Compra (FZ&#8804;2)</div><div class="value c-green" id="sum-buy">&#8212;</div></div>
   </div>
-
   <div class="filters">
     <div><label>Sector:</label><select id="f-sector"><option value="">Todos</option></select></div>
     <div><label>Veredicto:</label>
@@ -115,73 +97,57 @@
       </select>
     </div>
     <div class="filter-group">
-      <label>Upside mín. FZ:</label>
+      <label>Upside m&#237;n. FZ:</label>
       <input type="range" id="f-upside" min="-100" max="200" value="-100" step="5">
-      <span class="upside-val" id="f-upside-val">–</span>
+      <span class="upside-val" id="f-upside-val">&#8211;</span>
     </div>
-    <button class="reset-btn" onclick="resetFilters()">↺ Resetear</button>
+    <button class="reset-btn" onclick="resetFilters()">&#8635; Resetear</button>
   </div>
-
   <div id="row-count"></div>
-
   <div class="table-wrap">
-  <table>
-    <thead><tr>
-      <th onclick="sortBy('ticker')">TICKER<span class="sort-icon" id="i-ticker">↕</span></th>
-      <th onclick="sortBy('name')">NOMBRE<span class="sort-icon" id="i-name">↕</span></th>
-      <th onclick="sortBy('sector')">SECTOR<span class="sort-icon" id="i-sector">↕</span></th>
-      <th onclick="sortBy('price')">PRECIO<span class="sort-icon" id="i-price">↕</span></th>
-      <th onclick="sortBy('mcap')">MKT CAP<span class="sort-icon" id="i-mcap">↕</span></th>
-      <th onclick="sortBy('size')">TAMAÑO<span class="sort-icon" id="i-size">↕</span></th>
-      <th onclick="sortBy('beta')">BETA<span class="sort-icon" id="i-beta">↕</span></th>
-      <th onclick="sortBy('roe')">ROE<span class="sort-icon" id="i-roe">↕</span></th>
-      <th onclick="sortBy('roic')">ROIC<span class="sort-icon" id="i-roic">↕</span></th>
-      <th onclick="sortBy('wacc')">WACC<span class="sort-icon" id="i-wacc">↕</span></th>
-      <th onclick="sortBy('eps_hist')">EPS 5Y<span class="sort-icon" id="i-eps_hist">↕</span></th>
-      <th onclick="sortBy('upside_fz')">UPSIDE FZ<span class="sort-icon" id="i-upside_fz">↕</span></th>
-      <th onclick="sortBy('upside_sa')">UPSIDE SA<span class="sort-icon" id="i-upside_sa">↕</span></th>
-      <th onclick="sortBy('ath_disc')">ATH DISC<span class="sort-icon" id="i-ath_disc">↕</span></th>
-      <th onclick="sortBy('veredicto')">VEREDICTO<span class="sort-icon" id="i-veredicto">↕</span></th>
-      <th onclick="sortBy('piotroski')">PIOTROSKI<span class="sort-icon" id="i-piotroski">↕</span></th>
-      <th onclick="sortBy('altman')">ALTMAN Z<span class="sort-icon" id="i-altman">↕</span></th>
-      <th onclick="sortBy('rsi')">RSI<span class="sort-icon" id="i-rsi">↕</span></th>
-      <th onclick="sortBy('recom_fz')">RECOM FZ<span class="sort-icon" id="i-recom_fz">↕</span></th>
-      <th onclick="sortBy('recom_sa')">RECOM SA<span class="sort-icon" id="i-recom_sa">↕</span></th>
-    </tr></thead>
-    <tbody id="tbody"></tbody>
-  </table>
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('ticker')">TICKER<span class="sort-icon" id="i-ticker">&#8597;</span></th>
+        <th onclick="sortBy('name')">NOMBRE<span class="sort-icon" id="i-name">&#8597;</span></th>
+        <th onclick="sortBy('sector')">SECTOR<span class="sort-icon" id="i-sector">&#8597;</span></th>
+        <th onclick="sortBy('price')">PRECIO<span class="sort-icon" id="i-price">&#8597;</span></th>
+        <th onclick="sortBy('mcap')">MKT CAP<span class="sort-icon" id="i-mcap">&#8597;</span></th>
+        <th onclick="sortBy('size')">TAMA&#209;O<span class="sort-icon" id="i-size">&#8597;</span></th>
+        <th onclick="sortBy('beta')">BETA<span class="sort-icon" id="i-beta">&#8597;</span></th>
+        <th onclick="sortBy('roe')">ROE<span class="sort-icon" id="i-roe">&#8597;</span></th>
+        <th onclick="sortBy('roic')">ROIC<span class="sort-icon" id="i-roic">&#8597;</span></th>
+        <th onclick="sortBy('wacc')">WACC<span class="sort-icon" id="i-wacc">&#8597;</span></th>
+        <th onclick="sortBy('eps_hist')">EPS 5Y<span class="sort-icon" id="i-eps_hist">&#8597;</span></th>
+        <th onclick="sortBy('upside_fz')">UPSIDE FZ<span class="sort-icon" id="i-upside_fz">&#8597;</span></th>
+        <th onclick="sortBy('upside_sa')">UPSIDE SA<span class="sort-icon" id="i-upside_sa">&#8597;</span></th>
+        <th onclick="sortBy('ath_disc')">ATH DISC<span class="sort-icon" id="i-ath_disc">&#8597;</span></th>
+        <th onclick="sortBy('veredicto')">VEREDICTO<span class="sort-icon" id="i-veredicto">&#8597;</span></th>
+        <th onclick="sortBy('piotroski')">PIOTROSKI<span class="sort-icon" id="i-piotroski">&#8597;</span></th>
+        <th onclick="sortBy('altman')">ALTMAN Z<span class="sort-icon" id="i-altman">&#8597;</span></th>
+        <th onclick="sortBy('rsi')">RSI<span class="sort-icon" id="i-rsi">&#8597;</span></th>
+        <th onclick="sortBy('recom_fz')">RECOM FZ<span class="sort-icon" id="i-recom_fz">&#8597;</span></th>
+        <th onclick="sortBy('recom_sa')">RECOM SA<span class="sort-icon" id="i-recom_sa">&#8597;</span></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
   </div>
 </div>
 
-<div id="loading-div" class="loading" style="display:none">
+<div id="loading-div" class="loading">
   <div class="spinner"></div><span id="loading-msg">Leyendo Google Sheet...</span>
 </div>
 <div id="error-div" style="display:none"></div>
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────────────────────────
-const SHEET_ID = '15Dl0mlbMDUj6w2_gKmji8G88MXDseoAajhxm79FSn_w';
-const DEFAULT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-const LS_KEY = 'sheet_csv_url';
+var SHEET_ID = '15Dl0mlbMDUj6w2_gKmji8G88MXDseoAajhxm79FSn_w';
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0';
 
-// ─── COLUMN MAP (0-indexed) ───────────────────────────────────────────────
-const C = {
-  TICKER:0, NAME:1, SECTOR:2, PRICE:3, MCAP:4, SIZE:5,
-  BETA:8, ROE:13, ROIC:14, WACC:15,
-  EPS_HIST:20,
-  UPSIDE_FZ:32, UPSIDE_SA:33, ATH_DISC:34,
-  PIOTROSKI:35, ALTMAN:36, RSI:37,
-  RECOM_FZ:39, RECOM_SA:40,
-  VEREDICTO:50
-};
+var C = { TICKER:0,NAME:1,SECTOR:2,PRICE:3,MCAP:4,SIZE:5,BETA:8,ROE:13,ROIC:14,WACC:15,EPS_HIST:20,UPSIDE_FZ:32,UPSIDE_SA:33,ATH_DISC:34,PIOTROSKI:35,ALTMAN:36,RSI:37,RECOM_FZ:39,RECOM_SA:40,VEREDICTO:50 };
 
-let DATA = [], filtered = [], sortKey = 'upside_fz', sortDir = -1;
+var DATA = [], filtered = [], sortKey = 'upside_fz', sortDir = -1;
 
-// ─── INIT ─────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem(LS_KEY) || DEFAULT_URL;
-  document.getElementById('sheet-url').value = saved;
-  document.getElementById('f-upside').addEventListener('input', function(){
+window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('f-upside').addEventListener('input', function() {
     document.getElementById('f-upside-val').textContent = this.value + '%';
     applyFilters();
   });
@@ -190,269 +156,228 @@ window.addEventListener('DOMContentLoaded', () => {
   loadData();
 });
 
-// ─── LOAD ─────────────────────────────────────────────────────────────────
-async function loadData(){
-  const url = DEFAULT_URL;
+function loadData() {
   showLoading('Leyendo Google Sheet...');
-  try {
-    const resp = await fetch(url);
-    if(!resp.ok) throw new Error(`HTTP ${resp.status} — ¿El sheet es público?`);
-    const text = await resp.text();
-    DATA = parseCSV(text);
-    if(DATA.length === 0) throw new Error('No se encontraron datos con TICKER válido.');
-    initFilters();
-    applyFilters();
-    document.getElementById('main-content').style.display = '';
-    document.getElementById('loading-div').style.display = 'none';
-    document.getElementById('error-div').style.display = 'none';
-    const now = new Date().toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
-    document.getElementById('status').textContent = `${DATA.length} tickers · Actualizado ${now}`;
-  } catch(e) {
-    showError(e.message);
-  }
+  fetch(CSV_URL)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' - El sheet debe ser publico');
+      return r.text();
+    })
+    .then(function(text) {
+      DATA = parseCSV(text);
+      if (DATA.length === 0) throw new Error('No se encontraron datos validos');
+      initFilters();
+      applyFilters();
+      document.getElementById('main-content').style.display = '';
+      document.getElementById('loading-div').style.display = 'none';
+      document.getElementById('error-div').style.display = 'none';
+      var now = new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+      document.getElementById('status').textContent = DATA.length + ' tickers - Actualizado ' + now;
+    })
+    .catch(function(e) {
+      showError(e.message);
+    });
 }
 
-// ─── PARSE CSV ────────────────────────────────────────────────────────────
-function parseCSV(text){
-  const lines = text.split(/\r?\n/);
-  const rows = [];
-  let inQuote = false, row = [], cell = '';
-  for(const line of lines){
-    for(let i = 0; i < line.length; i++){
-      const ch = line[i];
-      if(ch === '"'){ inQuote = !inQuote; }
-      else if(ch === ',' && !inQuote){ row.push(cell); cell = ''; }
-      else { cell += ch; }
-    }
-    if(!inQuote){ row.push(cell); cell = ''; rows.push(row); row = []; }
-    else { cell += '\n'; }
-  }
-
-  const result = [];
-  for(let i = 1; i < rows.length; i++){
-    const r = rows[i];
-    if(!r || !r[C.TICKER] || !r[C.TICKER].trim()) continue;
-    const ticker = r[C.TICKER].trim();
-    if(ticker === 'TICKERS' || ticker === 'ETF') continue; // skip header rows
+function parseCSV(text) {
+  var lines = text.split(/\r?\n/);
+  var result = [];
+  for (var i = 1; i < lines.length; i++) {
+    var r = splitCSVLine(lines[i]);
+    if (!r || r.length < 3) continue;
+    var ticker = (r[C.TICKER] || '').trim();
+    if (!ticker || ticker === 'TICKERS' || ticker === 'ETF') continue;
     result.push({
-      ticker,
-      name:     (r[C.NAME]   || '').trim(),
-      sector:   (r[C.SECTOR] || '').trim(),
-      price:    num(r[C.PRICE]),
-      mcap:     num(r[C.MCAP]),
-      size:     r[C.SIZE]   || '',
-      beta:     num(r[C.BETA]),
-      roe:      pctNum(r[C.ROE]),
-      roic:     pctNum(r[C.ROIC]),
-      wacc:     pctNum(r[C.WACC]),
+      ticker: ticker,
+      name: (r[C.NAME] || '').trim(),
+      sector: (r[C.SECTOR] || '').trim(),
+      price: num(r[C.PRICE]),
+      mcap: num(r[C.MCAP]),
+      size: (r[C.SIZE] || '').trim(),
+      beta: num(r[C.BETA]),
+      roe: pctNum(r[C.ROE]),
+      roic: pctNum(r[C.ROIC]),
+      wacc: pctNum(r[C.WACC]),
       eps_hist: pctNum(r[C.EPS_HIST]),
       upside_fz: pctNum(r[C.UPSIDE_FZ]),
       upside_sa: pctNum(r[C.UPSIDE_SA]),
-      ath_disc:  pctNum(r[C.ATH_DISC]),
+      ath_disc: pctNum(r[C.ATH_DISC]),
       piotroski: num(r[C.PIOTROSKI]),
-      altman:    num(r[C.ALTMAN]),
-      rsi:       num(r[C.RSI]),
-      recom_fz:  num(r[C.RECOM_FZ]),
-      recom_sa:  num(r[C.RECOM_SA]),
+      altman: num(r[C.ALTMAN]),
+      rsi: num(r[C.RSI]),
+      recom_fz: num(r[C.RECOM_FZ]),
+      recom_sa: num(r[C.RECOM_SA]),
       veredicto: (r[C.VEREDICTO] || '').trim() || 'N/A'
     });
   }
   return result;
 }
 
-function num(v){ if(!v||v.trim()===''||v==='N/A'||v==='ERROR'||v.includes('#')) return null; return parseFloat(v.replace(/[,%]/g,'')) || null; }
-function pctNum(v){ if(!v||v.trim()===''||v==='N/A'||v==='ERROR'||v.includes('#')) return null; return parseFloat(v.replace('%','')) || null; }
-
-// ─── FILTERS ──────────────────────────────────────────────────────────────
-function initFilters(){
-  const sel = document.getElementById('f-sector');
-  const sectors = [...new Set(DATA.map(d=>d.sector).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="">Todos</option>' + sectors.map(s=>`<option>${s}</option>`).join('');
+function splitCSVLine(line) {
+  var result = [], cell = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cell); cell = ''; }
+    else { cell += c; }
+  }
+  result.push(cell);
+  return result;
 }
 
-function resetFilters(){
+function num(v) {
+  if (!v || v.trim() === '' || v === 'N/A' || v === 'ERROR' || v.indexOf('#') >= 0) return null;
+  var n = parseFloat(v.replace(/[,%]/g, ''));
+  return isNaN(n) ? null : n;
+}
+function pctNum(v) {
+  if (!v || v.trim() === '' || v === 'N/A' || v === 'ERROR' || v.indexOf('#') >= 0) return null;
+  var n = parseFloat(v.replace('%', ''));
+  return isNaN(n) ? null : n;
+}
+
+function initFilters() {
+  var sectors = [];
+  DATA.forEach(function(d) { if (d.sector && sectors.indexOf(d.sector) < 0) sectors.push(d.sector); });
+  sectors.sort();
+  var sel = document.getElementById('f-sector');
+  sel.innerHTML = '<option value="">Todos</option>';
+  sectors.forEach(function(s) {
+    var o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    sel.appendChild(o);
+  });
+}
+
+function resetFilters() {
   document.getElementById('f-sector').value = '';
   document.getElementById('f-veredicto').value = '';
   document.getElementById('f-upside').value = -100;
-  document.getElementById('f-upside-val').textContent = '–';
+  document.getElementById('f-upside-val').textContent = '-';
   applyFilters();
 }
 
-function applyFilters(){
-  const sec = document.getElementById('f-sector').value;
-  const verd = document.getElementById('f-veredicto').value;
-  const minUp = +document.getElementById('f-upside').value;
-  filtered = DATA.filter(d => {
-    if(sec && d.sector !== sec) return false;
-    if(verd && d.veredicto !== verd) return false;
-    if(minUp > -100 && (d.upside_fz === null || d.upside_fz < minUp)) return false;
+function applyFilters() {
+  var sec = document.getElementById('f-sector').value;
+  var verd = document.getElementById('f-veredicto').value;
+  var minUp = parseInt(document.getElementById('f-upside').value);
+  filtered = DATA.filter(function(d) {
+    if (sec && d.sector !== sec) return false;
+    if (verd && d.veredicto !== verd) return false;
+    if (minUp > -100 && (d.upside_fz === null || d.upside_fz < minUp)) return false;
     return true;
   });
+  doSort();
+  render();
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
+  document.querySelectorAll('thead th').forEach(function(t) { t.classList.remove('sorted'); });
+  var icon = document.getElementById('i-' + key);
+  if (icon) { icon.closest('th').classList.add('sorted'); icon.textContent = sortDir === 1 ? '↑' : '↓'; }
   doSort(); render();
 }
 
-// ─── SORT ─────────────────────────────────────────────────────────────────
-function sortBy(key){
-  if(sortKey===key) sortDir*=-1; else{sortKey=key;sortDir=-1;}
-  document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sorted'));
-  const icon = document.getElementById('i-'+key);
-  if(icon){ icon.closest('th').classList.add('sorted'); icon.textContent=sortDir===1?'↑':'↓'; }
-  doSort(); render();
-}
-function doSort(){
-  filtered.sort((a,b)=>{
-    let av=a[sortKey],bv=b[sortKey];
-    if(av===null&&bv===null) return 0;
-    if(av===null) return 1; if(bv===null) return -1;
-    if(typeof av==='string') return av.localeCompare(bv)*sortDir;
-    return (av-bv)*sortDir;
+function doSort() {
+  filtered.sort(function(a, b) {
+    var av = a[sortKey], bv = b[sortKey];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
   });
 }
 
-// ─── FORMAT HELPERS ───────────────────────────────────────────────────────
-const na = (v,fn) => v===null?'<span class="c-na">N/A</span>':fn(v);
-const pct = (v,d=1) => (v>=0?'+':'')+v.toFixed(d)+'%';
+function na(v, fn) { return v === null ? '<span class="c-na">N/A</span>' : fn(v); }
+function pct(v, d) { d = d || 1; return (v >= 0 ? '+' : '') + v.toFixed(d) + '%'; }
 
-function fmtUpside(v){ return na(v,v=>{
-  const c=v>=30?'c-green':v>=10?'c-lgreen':v>=0?'':'c-red';
-  return `<span class="${c}" style="${!c?'color:#1a1a1a':''}">${pct(v)}</span>`;
-}); }
-function fmtROE(v){ return na(v,v=>`<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
-function fmtROIC(v){ return na(v,v=>`<span class="${v>=15?'c-green':v>=5?'c-amber':'c-red'}">${pct(v)}</span>`); }
-function fmtWACC(roic,wacc){ return na(wacc,w=>{
-  const bad=roic!==null&&w>roic;
-  return `<span class="${bad?'c-red':''}" title="${bad?'Destruye valor: WACC > ROIC':''}">${w.toFixed(2)}%</span>`;
-}); }
-function fmtEPS(v){ return na(v,v=>`<span class="${v>0?'c-green':'c-red'}">${pct(v)}</span>`); }
-function fmtBeta(v){ return na(v,v=>`<span class="${v<1?'c-green':v<=1.5?'':'c-amber'}">${v.toFixed(2)}</span>`); }
-function fmtRSI(v){ return na(v,v=>`<span class="${v>70?'c-red':v<30?'c-green':''}">${v.toFixed(1)}</span>`); }
-function fmtRecomFZ(v){ return na(v,v=>{
-  const s=v<=1.5?'color:#16a34a;font-weight:600':v<=2?'color:#2563eb':v<=3?'color:#555':'color:#dc2626;font-weight:600';
-  return `<span style="${s}">${v.toFixed(2)}</span>`;
-}); }
-function fmtPio(v){ return na(v,v=>{
-  const c=v>=7?'pio-green':v>=5?'pio-blue':v>=3?'pio-amber':'pio-red';
-  return `<span class="pio"><span class="pio-dot ${c}"></span>${v}</span>`;
-}); }
-function fmtATH(v){ return na(v,v=>`<span class="${v>=0?'c-green':'c-red'}">${pct(v)}</span>`); }
-function sectorKey(s){ return (s||'').replace(/\s+/g,''); }
-
-function verdBadge(v){
-  const map={OPORTUNIDAD:'verd-OPORTUNIDAD',Buena:'verd-Buena',Neutral:'verd-Neutral',Riesgo:'verd-Riesgo',Evitar:'verd-Evitar'};
-  return `<span class="badge ${map[v]||'verd-na'}">${v||'N/A'}</span>`;
+function fmtUpside(v) {
+  return na(v, function(v) {
+    var c = v >= 30 ? 'c-green' : v >= 10 ? 'c-lgreen' : v >= 0 ? '' : 'c-red';
+    return '<span class="' + c + '" style="' + (!c ? 'color:#1a1a1a' : '') + '">' + pct(v) + '</span>';
+  });
+}
+function fmtROE(v) { return na(v, function(v) { return '<span class="' + (v>=15?'c-green':v>=5?'c-amber':'c-red') + '">' + pct(v) + '</span>'; }); }
+function fmtROIC(v) { return na(v, function(v) { return '<span class="' + (v>=15?'c-green':v>=5?'c-amber':'c-red') + '">' + pct(v) + '</span>'; }); }
+function fmtWACC(roic, wacc) {
+  return na(wacc, function(w) {
+    var bad = roic !== null && w > roic;
+    return '<span class="' + (bad?'c-red':'') + '" title="' + (bad?'Destruye valor: WACC > ROIC':'') + '">' + w.toFixed(2) + '%</span>';
+  });
+}
+function fmtEPS(v) { return na(v, function(v) { return '<span class="' + (v>0?'c-green':'c-red') + '">' + pct(v) + '</span>'; }); }
+function fmtBeta(v) { return na(v, function(v) { return '<span class="' + (v<1?'c-green':v<=1.5?'':'c-amber') + '">' + v.toFixed(2) + '</span>'; }); }
+function fmtRSI(v) { return na(v, function(v) { return '<span class="' + (v>70?'c-red':v<30?'c-green':'') + '">' + v.toFixed(1) + '</span>'; }); }
+function fmtRecomFZ(v) {
+  return na(v, function(v) {
+    var s = v<=1.5 ? 'color:#16a34a;font-weight:600' : v<=2 ? 'color:#2563eb' : v<=3 ? 'color:#555' : 'color:#dc2626;font-weight:600';
+    return '<span style="' + s + '">' + v.toFixed(2) + '</span>';
+  });
+}
+function fmtPio(v) {
+  return na(v, function(v) {
+    var c = v>=7 ? 'pio-green' : v>=5 ? 'pio-blue' : v>=3 ? 'pio-amber' : 'pio-red';
+    return '<span class="pio"><span class="pio-dot ' + c + '"></span>' + v + '</span>';
+  });
+}
+function fmtATH(v) { return na(v, function(v) { return '<span class="' + (v>=0?'c-green':'c-red') + '">' + pct(v) + '</span>'; }); }
+function sectorKey(s) { return (s || '').replace(/\s+/g, ''); }
+function verdBadge(v) {
+  var map = {OPORTUNIDAD:'verd-OPORTUNIDAD', Buena:'verd-Buena', Neutral:'verd-Neutral', Riesgo:'verd-Riesgo', Evitar:'verd-Evitar'};
+  return '<span class="badge ' + (map[v] || 'verd-na') + '">' + (v || 'N/A') + '</span>';
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────
-function render(){
-  document.getElementById('tbody').innerHTML = filtered.map(d=>`
-    <tr>
-      <td><span class="ticker">${d.ticker}</span></td>
-      <td><div class="name-cell" title="${d.name}">${d.name}</div></td>
-      <td><span class="badge badge-${sectorKey(d.sector)}">${d.sector}</span></td>
-      <td>${d.price!=null?'$'+d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'<span class="c-na">N/A</span>'}</td>
-      <td>${d.mcap!=null?d.mcap.toFixed(2)+'B':'<span class="c-na">N/A</span>'}</td>
-      <td>${d.size||'<span class="c-na">N/A</span>'}</td>
-      <td>${fmtBeta(d.beta)}</td>
-      <td>${fmtROE(d.roe)}</td>
-      <td>${fmtROIC(d.roic)}</td>
-      <td>${fmtWACC(d.roic,d.wacc)}</td>
-      <td>${fmtEPS(d.eps_hist)}</td>
-      <td>${fmtUpside(d.upside_fz)}</td>
-      <td>${fmtUpside(d.upside_sa)}</td>
-      <td>${fmtATH(d.ath_disc)}</td>
-      <td>${verdBadge(d.veredicto)}</td>
-      <td>${fmtPio(d.piotroski)}</td>
-      <td>${d.altman!=null?d.altman.toFixed(2):'<span class="c-na">N/A</span>'}</td>
-      <td>${fmtRSI(d.rsi)}</td>
-      <td>${fmtRecomFZ(d.recom_fz)}</td>
-      <td>${d.recom_sa!=null?d.recom_sa:'<span class="c-na">N/A</span>'}</td>
-    </tr>
-  `).join('');
+function render() {
+  var html = '';
+  filtered.forEach(function(d) {
+    html += '<tr>';
+    html += '<td><span class="ticker">' + d.ticker + '</span></td>';
+    html += '<td><div class="name-cell" title="' + d.name + '">' + d.name + '</div></td>';
+    html += '<td><span class="badge badge-' + sectorKey(d.sector) + '">' + d.sector + '</span></td>';
+    html += '<td>' + (d.price != null ? '$' + d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '<span class="c-na">N/A</span>') + '</td>';
+    html += '<td>' + (d.mcap != null ? d.mcap.toFixed(2) + 'B' : '<span class="c-na">N/A</span>') + '</td>';
+    html += '<td>' + (d.size || '<span class="c-na">N/A</span>') + '</td>';
+    html += '<td>' + fmtBeta(d.beta) + '</td>';
+    html += '<td>' + fmtROE(d.roe) + '</td>';
+    html += '<td>' + fmtROIC(d.roic) + '</td>';
+    html += '<td>' + fmtWACC(d.roic, d.wacc) + '</td>';
+    html += '<td>' + fmtEPS(d.eps_hist) + '</td>';
+    html += '<td>' + fmtUpside(d.upside_fz) + '</td>';
+    html += '<td>' + fmtUpside(d.upside_sa) + '</td>';
+    html += '<td>' + fmtATH(d.ath_disc) + '</td>';
+    html += '<td>' + verdBadge(d.veredicto) + '</td>';
+    html += '<td>' + fmtPio(d.piotroski) + '</td>';
+    html += '<td>' + (d.altman != null ? d.altman.toFixed(2) : '<span class="c-na">N/A</span>') + '</td>';
+    html += '<td>' + fmtRSI(d.rsi) + '</td>';
+    html += '<td>' + fmtRecomFZ(d.recom_fz) + '</td>';
+    html += '<td>' + (d.recom_sa != null ? d.recom_sa : '<span class="c-na">N/A</span>') + '</td>';
+    html += '</tr>';
+  });
+  document.getElementById('tbody').innerHTML = html;
 
   document.getElementById('sum-total').textContent = filtered.length;
-  document.getElementById('sum-op').textContent = filtered.filter(d=>d.veredicto==='OPORTUNIDAD').length;
-  const ups = filtered.filter(d=>d.upside_fz!=null);
-  document.getElementById('sum-upside').textContent = ups.length?('+'+( ups.reduce((a,b)=>a+b.upside_fz,0)/ups.length).toFixed(1)+'%'):'—';
-  const pios = filtered.filter(d=>d.piotroski!=null);
-  document.getElementById('sum-pio').textContent = pios.length?(pios.reduce((a,b)=>a+b.piotroski,0)/pios.length).toFixed(1):'—';
-  document.getElementById('sum-buy').textContent = filtered.filter(d=>d.recom_fz!=null&&d.recom_fz<=2).length;
-  document.getElementById('row-count').textContent = `Mostrando ${filtered.length} de ${DATA.length} tickers`;
+  document.getElementById('sum-op').textContent = filtered.filter(function(d) { return d.veredicto === 'OPORTUNIDAD'; }).length;
+  var ups = filtered.filter(function(d) { return d.upside_fz != null; });
+  document.getElementById('sum-upside').textContent = ups.length ? ('+' + (ups.reduce(function(a,b){return a+b.upside_fz;},0)/ups.length).toFixed(1) + '%') : '-';
+  var pios = filtered.filter(function(d) { return d.piotroski != null; });
+  document.getElementById('sum-pio').textContent = pios.length ? (pios.reduce(function(a,b){return a+b.piotroski;},0)/pios.length).toFixed(1) : '-';
+  document.getElementById('sum-buy').textContent = filtered.filter(function(d) { return d.recom_fz != null && d.recom_fz <= 2; }).length;
+  document.getElementById('row-count').textContent = 'Mostrando ' + filtered.length + ' de ' + DATA.length + ' tickers';
 }
 
-// ─── UI HELPERS ───────────────────────────────────────────────────────────
-function showLoading(msg){
+function showLoading(msg) {
   document.getElementById('main-content').style.display = 'none';
   document.getElementById('error-div').style.display = 'none';
   document.getElementById('loading-div').style.display = 'flex';
   document.getElementById('loading-msg').textContent = msg;
 }
-function showError(msg){
+function showError(msg) {
   document.getElementById('loading-div').style.display = 'none';
   document.getElementById('main-content').style.display = 'none';
   document.getElementById('error-div').style.display = 'block';
-  document.getElementById('error-div').innerHTML = `
-    <div class="error-box">
-      ⚠️ <strong>No se pudo cargar el sheet:</strong> ${msg}<br><br>
-      <strong>Para que funcione necesitas:</strong><br>
-      1. Abrir el Google Sheet → Compartir → Cambiar a "Cualquiera con el enlace puede ver"<br>
-      2. Copiar esta URL y pegarla arriba:<br>
-      <code>https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0</code>
-    </div>`;
-}
-</script>
-</body>
-</html>
-.innerHTML = filtered.map(d=>`
-    <tr>
-      <td><span class="ticker">${d.ticker}</span></td>
-      <td><div class="name-cell" title="${d.name}">${d.name}</div></td>
-      <td><span class="badge badge-${sectorKey(d.sector)}">${d.sector}</span></td>
-      <td>${d.price!=null?'$'+d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'<span class="c-na">N/A</span>'}</td>
-      <td>${d.mcap!=null?d.mcap.toFixed(2)+'B':'<span class="c-na">N/A</span>'}</td>
-      <td>${d.size||'<span class="c-na">N/A</span>'}</td>
-      <td>${fmtBeta(d.beta)}</td>
-      <td>${fmtROE(d.roe)}</td>
-      <td>${fmtROIC(d.roic)}</td>
-      <td>${fmtWACC(d.roic,d.wacc)}</td>
-      <td>${fmtEPS(d.eps_hist)}</td>
-      <td>${fmtUpside(d.upside_fz)}</td>
-      <td>${fmtUpside(d.upside_sa)}</td>
-      <td>${fmtATH(d.ath_disc)}</td>
-      <td>${verdBadge(d.veredicto)}</td>
-      <td>${fmtPio(d.piotroski)}</td>
-      <td>${d.altman!=null?d.altman.toFixed(2):'<span class="c-na">N/A</span>'}</td>
-      <td>${fmtRSI(d.rsi)}</td>
-      <td>${fmtRecomFZ(d.recom_fz)}</td>
-      <td>${d.recom_sa!=null?d.recom_sa:'<span class="c-na">N/A</span>'}</td>
-    </tr>
-  `).join('');
-
-  document.getElementById('sum-total').textContent = filtered.length;
-  document.getElementById('sum-op').textContent = filtered.filter(d=>d.veredicto==='OPORTUNIDAD').length;
-  const ups = filtered.filter(d=>d.upside_fz!=null);
-  document.getElementById('sum-upside').textContent = ups.length?('+'+( ups.reduce((a,b)=>a+b.upside_fz,0)/ups.length).toFixed(1)+'%'):'—';
-  const pios = filtered.filter(d=>d.piotroski!=null);
-  document.getElementById('sum-pio').textContent = pios.length?(pios.reduce((a,b)=>a+b.piotroski,0)/pios.length).toFixed(1):'—';
-  document.getElementById('sum-buy').textContent = filtered.filter(d=>d.recom_fz!=null&&d.recom_fz<=2).length;
-  document.getElementById('row-count').textContent = `Mostrando ${filtered.length} de ${DATA.length} tickers`;
-}
-
-// ─── UI HELPERS ───────────────────────────────────────────────────────────
-function showLoading(msg){
-  document.getElementById('main-content').style.display = 'none';
-  document.getElementById('error-div').style.display = 'none';
-  document.getElementById('loading-div').style.display = 'flex';
-  document.getElementById('loading-msg').textContent = msg;
-}
-function showError(msg){
-  document.getElementById('loading-div').style.display = 'none';
-  document.getElementById('main-content').style.display = 'none';
-  document.getElementById('error-div').style.display = 'block';
-  document.getElementById('error-div').innerHTML = `
-    <div class="error-box">
-      ⚠️ <strong>No se pudo cargar el sheet:</strong> ${msg}<br><br>
-      El sheet debe estar compartido como "Cualquiera con el enlace puede ver".
-    </div>`;
+  document.getElementById('error-div').innerHTML = '<div class="error-box"><strong>No se pudo cargar el sheet:</strong> ' + msg + '<br><br>El sheet debe estar compartido como "Cualquiera con el enlace puede ver".</div>';
 }
 </script>
 </body>
