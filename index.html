@@ -3,382 +3,573 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard de Análisis de Acciones</title>
+<title>Dashboard de Acciones</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 13px; }
-header { background: #fff; border-bottom: 1px solid #e8e8e4; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-header h1 { font-size: 18px; font-weight: 700; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-#status { font-size: 12px; color: #888; }
-#reload-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
-.loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #888; font-size: 14px; gap: 10px; }
-.spinner { width: 20px; height: 20px; border: 2px solid #e8e8e4; border-top-color: #16a34a; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error-box { margin: 24px; padding: 16px 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; font-size: 13px; color: #856404; }
-.summary-cards { display: flex; gap: 12px; padding: 16px 24px; flex-wrap: wrap; }
-.card { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 14px 18px; min-width: 150px; flex: 1; }
-.card .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-.card .value { font-size: 22px; font-weight: 700; }
-.filters { display: flex; gap: 12px; padding: 0 24px 14px; align-items: center; flex-wrap: wrap; }
-.filters label { font-size: 12px; color: #555; margin-right: 4px; }
-.filters select { border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; font-size: 12px; background: #fff; cursor: pointer; }
-.filter-group { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #e8e8e4; border-radius: 6px; padding: 6px 10px; }
-.filter-group input[type=range] { width: 110px; accent-color: #16a34a; }
-.filter-group .upside-val { font-size: 12px; font-weight: 600; min-width: 42px; }
-.reset-btn { padding: 6px 14px; font-size: 12px; border: 1px solid #e8e8e4; border-radius: 6px; background: #fff; cursor: pointer; }
-.table-wrap { padding: 0 24px 24px; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; overflow: hidden; }
-thead th { background: #f8f8f6; border-bottom: 1px solid #e8e8e4; padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #555; white-space: nowrap; cursor: pointer; user-select: none; }
-thead th:hover { background: #f0f0ec; }
-thead th.sorted { color: #1a1a1a; }
-.sort-icon { margin-left: 3px; color: #bbb; font-size: 10px; }
-thead th.sorted .sort-icon { color: #16a34a; }
-tbody tr { border-bottom: 1px solid #f0f0ec; }
-tbody tr:hover { background: #fafaf8; }
-tbody td { padding: 9px 10px; white-space: nowrap; vertical-align: middle; }
-.ticker { font-weight: 700; }
-.name-cell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; color: #444; font-size: 12px; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; white-space: nowrap; }
-.badge-Technology { background: #eff6ff; color: #1d4ed8; }
-.badge-CommunicationServices { background: #f0fdf4; color: #15803d; }
-.badge-Financial { background: #fdf4ff; color: #7e22ce; }
-.badge-Healthcare { background: #fff7ed; color: #c2410c; }
-.badge-ConsumerCyclical { background: #fefce8; color: #a16207; }
-.badge-ConsumerDefensive { background: #ecfdf5; color: #166534; }
-.badge-Energy { background: #fef2f2; color: #b91c1c; }
-.badge-Utilities { background: #f0f9ff; color: #0369a1; }
-.badge-Industrials { background: #fff1f2; color: #be123c; }
-.badge-BasicMaterials { background: #fefce8; color: #713f12; }
-.verd-OPORTUNIDAD { background: #dcfce7; color: #15803d; font-weight: 700; }
-.verd-Buena { background: #ccfbf1; color: #0f766e; font-weight: 600; }
-.verd-Neutral { background: #f3f4f6; color: #4b5563; }
-.verd-Riesgo { background: #fef9c3; color: #92400e; }
-.verd-Evitar { background: #fee2e2; color: #b91c1c; font-weight: 700; }
-.verd-na { background: #f3f4f6; color: #9ca3af; }
-.pio { display: inline-flex; align-items: center; gap: 5px; }
-.pio-dot { width: 9px; height: 9px; border-radius: 50%; }
-.pio-green { background: #16a34a; }
-.pio-blue { background: #2563eb; }
-.pio-amber { background: #d97706; }
-.pio-red { background: #dc2626; }
-.c-green { color: #16a34a; font-weight: 600; }
-.c-lgreen { color: #22c55e; }
-.c-red { color: #dc2626; font-weight: 600; }
-.c-amber { color: #d97706; }
-.c-na { color: #bbb; }
-#row-count { font-size: 12px; color: #888; padding: 0 24px 8px; }
+  :root{
+    --bg:#f5f5f0;
+    --card-bg:#ffffff;
+    --border:#e8e8e4;
+    --text:#1f2320;
+    --text-soft:#6b6f6a;
+    --green:#1f8a4c;
+    --green-bg:#e6f4ea;
+    --green-light:#4caf7d;
+    --amber:#b8860b;
+    --amber-bg:#fdf3d8;
+    --red:#c0392b;
+    --red-bg:#fbe7e4;
+    --blue:#2563a8;
+    --blue-bg:#e5eef8;
+    --teal:#0f766e;
+    --teal-bg:#e1f2f0;
+    --gray:#6b7280;
+    --gray-bg:#eceeec;
+    --orange:#c2660a;
+    --orange-bg:#fbe9d8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:24px;
+    background:var(--bg);
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color:var(--text);
+  }
+  h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0 0 4px 0;
+  }
+  .subtitle{
+    color:var(--text-soft);
+    font-size:13px;
+    margin:0 0 20px 0;
+  }
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:14px;
+    margin-bottom:20px;
+  }
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .card-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--text-soft);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .card-value{
+    font-size:24px;
+    font-weight:700;
+  }
+  .filters{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:18px;
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .filter-group{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:180px;
+  }
+  .filter-group label{
+    font-size:11px;
+    font-weight:600;
+    color:var(--text-soft);
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  select, input[type=range]{
+    font-family:inherit;
+  }
+  select{
+    padding:7px 10px;
+    border-radius:6px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-size:13px;
+    color:var(--text);
+  }
+  .slider-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .slider-row input[type=range]{
+    width:160px;
+  }
+  .slider-value{
+    font-size:13px;
+    font-weight:700;
+    min-width:44px;
+  }
+  .reset-btn{
+    padding:7px 14px;
+    border-radius:6px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--text-soft);
+    font-size:13px;
+    cursor:pointer;
+    height:34px;
+  }
+  .reset-btn:hover{
+    background:var(--bg);
+  }
+  .table-wrap{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:auto;
+    max-height:70vh;
+  }
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:12.5px;
+    min-width:1500px;
+  }
+  thead th{
+    position:sticky;
+    top:0;
+    background:#fafaf7;
+    border-bottom:1px solid var(--border);
+    text-align:left;
+    padding:10px 10px;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    color:var(--text-soft);
+    cursor:pointer;
+    white-space:nowrap;
+    user-select:none;
+  }
+  thead th:hover{
+    color:var(--text);
+  }
+  thead th .arrow{
+    margin-left:4px;
+    opacity:0.5;
+    font-size:10px;
+  }
+  thead th.sorted .arrow{
+    opacity:1;
+  }
+  tbody td{
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody tr:hover{
+    background:#fafaf7;
+  }
+  .ticker-cell{
+    font-weight:700;
+  }
+  .name-cell{
+    color:var(--text-soft);
+    max-width:180px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .num{
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .badge{
+    display:inline-block;
+    padding:3px 9px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .dot{
+    display:inline-block;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    margin-right:6px;
+  }
+  .green-txt{color:var(--green); font-weight:600;}
+  .amber-txt{color:var(--amber); font-weight:600;}
+  .red-txt{color:var(--red); font-weight:600;}
+  .greenlight-txt{color:var(--green-light); font-weight:600;}
+  .black-txt{color:var(--text);}
+  .na{color:#b9bcb6;}
+  .empty-state{
+    padding:40px;
+    text-align:center;
+    color:var(--text-soft);
+  }
+  @media (max-width:1100px){
+    .cards{grid-template-columns:repeat(2,1fr);}
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>&#128202; Dashboard de An&#225;lisis de Acciones</h1>
-  <div class="header-right">
-    <span id="status">Cargando datos...</span>
-    <button id="reload-btn" onclick="loadData()">&#8635; Recargar</button>
-  </div>
-</header>
+<h1>Dashboard de Acciones</h1>
+<p class="subtitle" id="lastUpdate">Datos cargados del sheet · 74 tickers</p>
 
-<div id="main-content" style="display:none">
-  <div class="summary-cards">
-    <div class="card"><div class="label">Total Tickers</div><div class="value" id="sum-total">&#8212;</div></div>
-    <div class="card"><div class="label">Oportunidades</div><div class="value c-green" id="sum-op">&#8212;</div></div>
-    <div class="card"><div class="label">Upside Prom. FZ</div><div class="value" style="color:#2563eb" id="sum-upside">&#8212;</div></div>
-    <div class="card"><div class="label">Piotroski Prom.</div><div class="value" id="sum-pio">&#8212;</div></div>
-    <div class="card"><div class="label">Recom. Compra (FZ&#8804;2)</div><div class="value c-green" id="sum-buy">&#8212;</div></div>
+<div class="cards" id="cards"></div>
+
+<div class="filters">
+  <div class="filter-group">
+    <label for="sectorFilter">Sector</label>
+    <select id="sectorFilter"><option value="">Todos los sectores</option></select>
   </div>
-  <div class="filters">
-    <div><label>Sector:</label><select id="f-sector"><option value="">Todos</option></select></div>
-    <div><label>Veredicto:</label>
-      <select id="f-veredicto">
-        <option value="">Todos</option>
-        <option>OPORTUNIDAD</option><option>Buena</option><option>Neutral</option><option>Riesgo</option><option>Evitar</option>
-      </select>
+  <div class="filter-group">
+    <label for="veredictoFilter">Veredicto</label>
+    <select id="veredictoFilter"><option value="">Todos los veredictos</option></select>
+  </div>
+  <div class="filter-group">
+    <label for="upsideSlider">Upside FZ mínimo</label>
+    <div class="slider-row">
+      <input type="range" id="upsideSlider" min="-30" max="100" value="-30" step="1">
+      <span class="slider-value" id="upsideValue">≥ -30%</span>
     </div>
-    <div class="filter-group">
-      <label>Upside m&#237;n. FZ:</label>
-      <input type="range" id="f-upside" min="-100" max="200" value="-100" step="5">
-      <span class="upside-val" id="f-upside-val">&#8211;</span>
-    </div>
-    <button class="reset-btn" onclick="resetFilters()">&#8635; Resetear</button>
   </div>
-  <div id="row-count"></div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr>
-        <th onclick="sortBy('ticker')">TICKER<span class="sort-icon" id="i-ticker">&#8597;</span></th>
-        <th onclick="sortBy('name')">NOMBRE<span class="sort-icon" id="i-name">&#8597;</span></th>
-        <th onclick="sortBy('sector')">SECTOR<span class="sort-icon" id="i-sector">&#8597;</span></th>
-        <th onclick="sortBy('price')">PRECIO<span class="sort-icon" id="i-price">&#8597;</span></th>
-        <th onclick="sortBy('mcap')">MKT CAP<span class="sort-icon" id="i-mcap">&#8597;</span></th>
-        <th onclick="sortBy('size')">TAMA&#209;O<span class="sort-icon" id="i-size">&#8597;</span></th>
-        <th onclick="sortBy('beta')">BETA<span class="sort-icon" id="i-beta">&#8597;</span></th>
-        <th onclick="sortBy('roe')">ROE<span class="sort-icon" id="i-roe">&#8597;</span></th>
-        <th onclick="sortBy('roic')">ROIC<span class="sort-icon" id="i-roic">&#8597;</span></th>
-        <th onclick="sortBy('wacc')">WACC<span class="sort-icon" id="i-wacc">&#8597;</span></th>
-        <th onclick="sortBy('eps_hist')">EPS 5Y<span class="sort-icon" id="i-eps_hist">&#8597;</span></th>
-        <th onclick="sortBy('upside_fz')">UPSIDE FZ<span class="sort-icon" id="i-upside_fz">&#8597;</span></th>
-        <th onclick="sortBy('upside_sa')">UPSIDE SA<span class="sort-icon" id="i-upside_sa">&#8597;</span></th>
-        <th onclick="sortBy('ath_disc')">ATH DISC<span class="sort-icon" id="i-ath_disc">&#8597;</span></th>
-        <th onclick="sortBy('veredicto')">VEREDICTO<span class="sort-icon" id="i-veredicto">&#8597;</span></th>
-        <th onclick="sortBy('piotroski')">PIOTROSKI<span class="sort-icon" id="i-piotroski">&#8597;</span></th>
-        <th onclick="sortBy('altman')">ALTMAN Z<span class="sort-icon" id="i-altman">&#8597;</span></th>
-        <th onclick="sortBy('rsi')">RSI<span class="sort-icon" id="i-rsi">&#8597;</span></th>
-        <th onclick="sortBy('recom_fz')">RECOM FZ<span class="sort-icon" id="i-recom_fz">&#8597;</span></th>
-        <th onclick="sortBy('recom_sa')">RECOM SA<span class="sort-icon" id="i-recom_sa">&#8597;</span></th>
-      </tr></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
+  <button class="reset-btn" id="resetBtn">Limpiar filtros</button>
 </div>
 
-<div id="loading-div" class="loading">
-  <div class="spinner"></div><span id="loading-msg">Leyendo Google Sheet...</span>
+<div class="table-wrap">
+  <table id="stockTable">
+    <thead>
+      <tr>
+        <th data-key="ticker">Ticker<span class="arrow">↕</span></th>
+        <th data-key="name">Nombre<span class="arrow">↕</span></th>
+        <th data-key="sector">Sector<span class="arrow">↕</span></th>
+        <th data-key="price" class="num">Precio<span class="arrow">↕</span></th>
+        <th data-key="mcap" class="num">Mkt Cap (B)<span class="arrow">↕</span></th>
+        <th data-key="size">Tamaño<span class="arrow">↕</span></th>
+        <th data-key="beta" class="num">Beta<span class="arrow">↕</span></th>
+        <th data-key="roe" class="num">ROE<span class="arrow">↕</span></th>
+        <th data-key="roic" class="num">ROIC<span class="arrow">↕</span></th>
+        <th data-key="wacc" class="num">WACC<span class="arrow">↕</span></th>
+        <th data-key="eps5y" class="num">EPS 5Y<span class="arrow">↕</span></th>
+        <th data-key="upfz" class="num">Upside FZ<span class="arrow">↕</span></th>
+        <th data-key="upsa" class="num">Upside SA<span class="arrow">↕</span></th>
+        <th data-key="ath" class="num">ATH Disc.<span class="arrow">↕</span></th>
+        <th data-key="ver">Veredicto<span class="arrow">↕</span></th>
+        <th data-key="pio" class="num">Piotroski<span class="arrow">↕</span></th>
+        <th data-key="alt" class="num">Altman Z<span class="arrow">↕</span></th>
+        <th data-key="rsi" class="num">RSI<span class="arrow">↕</span></th>
+        <th data-key="rfz" class="num">Recom FZ<span class="arrow">↕</span></th>
+        <th data-key="rsa" class="num">Recom SA<span class="arrow">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">No hay tickers que coincidan con los filtros seleccionados.</div>
 </div>
-<div id="error-div" style="display:none"></div>
 
 <script>
-var SHEET_ID = '15Dl0mlbMDUj6w2_gKmji8G88MXDseoAajhxm79FSn_w';
-var CSV_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=0';
+const DATA = [{"ticker":"IREN","name":"IREN Ltd","sector":"Financial","price":38.82,"mcap":13.85,"size":"Large Cap","beta":4.29,"roe":6.69,"roic":2.04,"wacc":21.79,"eps5y":null,"upfz":115.84,"upsa":108.48,"ath":-49.5,"pio":5,"alt":1.42,"rsi":30.58,"rfz":1.82,"rsa":2,"ver":"Evitar"},{"ticker":"CRCL","name":"Circle Internet Group Inc","sector":"Financial","price":64.62,"mcap":16.06,"size":"Large Cap","beta":0.24,"roe":-2.98,"roic":-2.3,"wacc":null,"eps5y":null,"upfz":112.78,"upsa":112.19,"ath":-75.43,"pio":3,"alt":0.26,"rsi":34.03,"rfz":2.13,"rsa":2,"ver":"Riesgo"},{"ticker":"BABA","name":"Alibaba Group Holding Ltd ADR","sector":"Consumer Cyclical","price":96.14,"mcap":230.81,"size":"Mega Cap","beta":0.51,"roe":10.16,"roic":7.84,"wacc":6.31,"eps5y":-4.77,"upfz":99.79,"upsa":99.01,"ath":-50.1,"pio":3,"alt":3,"rsi":23.77,"rfz":1.34,"rsa":1,"ver":"Buena"},{"ticker":"ORCL","name":"Oracle Corp","sector":"Technology","price":140.27,"mcap":404.04,"size":"Mega Cap","beta":1.71,"roe":54.28,"roic":8.6,"wacc":10.37,"eps5y":null,"upfz":81.68,"upsa":79.55,"ath":-59.43,"pio":5,"alt":2.18,"rsi":26.72,"rfz":1.51,"rsa":2,"ver":"Neutral"},{"ticker":"CRWV","name":"CoreWeave Inc","sector":"Technology","price":81.75,"mcap":44.6,"size":"Large Cap","beta":7.26,"roe":-40.69,"roic":-5.0,"wacc":null,"eps5y":-231.46,"upfz":72.62,"upsa":74.06,"ath":-50.82,"pio":2,"alt":0.36,"rsi":33.69,"rfz":1.9,"rsa":2,"ver":"Evitar"},{"ticker":"NVDA","name":"NVIDIA Corp","sector":"Technology","price":194.83,"mcap":4714.89,"size":"Mega Cap","beta":2.22,"roe":114.29,"roic":77.17,"wacc":16.37,"eps5y":95.27,"upfz":60.85,"upsa":54.81,"ath":-17.63,"pio":6,"alt":44.16,"rsi":41.16,"rfz":1.26,"rsa":1,"ver":"Neutral"},{"ticker":"VST","name":"Vistra Corp","sector":"Utilities","price":151.05,"mcap":50.93,"size":"Large Cap","beta":1.42,"roe":43.01,"roic":9.8,"wacc":9.8,"eps5y":null,"upfz":52.39,"upsa":47.56,"ath":-31.28,"pio":6,"alt":null,"rsi":44.25,"rfz":1.38,"rsa":1,"ver":"Evitar"},{"ticker":"CAI","name":"Caris Life Sciences Inc","sector":"Healthcare","price":18.3,"mcap":5.17,"size":"Mid Cap","beta":0.5,"roe":28.35,"roic":3.34,"wacc":null,"eps5y":-7.57,"upfz":52.08,"upsa":52.08,"ath":-56.94,"pio":5,"alt":7.03,"rsi":54.26,"rfz":1.54,"rsa":2,"ver":"Evitar"},{"ticker":"CEG","name":"Constellation Energy Corp","sector":"Utilities","price":239.25,"mcap":85.92,"size":"Large Cap","beta":1.13,"roe":16.33,"roic":7.51,"wacc":8.64,"eps5y":32.58,"upfz":50.39,"upsa":49.55,"ath":-42.03,"pio":4,"alt":null,"rsi":34.09,"rfz":1.44,"rsa":2,"ver":"Neutral"},{"ticker":"NFLX","name":"Netflix Inc","sector":"Communication Services","price":77.65,"mcap":326.97,"size":"Mega Cap","beta":1.52,"roe":48.5,"roic":28.8,"wacc":12.19,"eps5y":32.98,"upfz":48.9,"upsa":47.01,"ath":-40.37,"pio":7,"alt":11.91,"rsi":47.28,"rfz":1.65,"rsa":2,"ver":"Buena"},{"ticker":"T","name":"AT&T Inc","sector":"Communication Services","price":20.58,"mcap":143,"size":"Large Cap","beta":0.22,"roe":20.12,"roic":8.24,"wacc":5.1,"eps5y":null,"upfz":47.67,"upsa":46.94,"ath":-30.92,"pio":6,"alt":0.95,"rsi":28.55,"rfz":1.96,"rsa":2,"ver":"Buena"},{"ticker":"AVGO","name":"Broadcom Inc","sector":"Technology","price":360.45,"mcap":1714.87,"size":"Mega Cap","beta":1.47,"roe":37.28,"roic":19.5,"wacc":12.01,"eps5y":49.76,"upfz":45.85,"upsa":45.3,"ath":-27.18,"pio":6,"alt":11.25,"rsi":39.63,"rfz":1.31,"rsa":1,"ver":"Evitar"},{"ticker":"CRM","name":"Salesforce Inc","sector":"Technology","price":166.11,"mcap":136.04,"size":"Large Cap","beta":1.17,"roe":16.91,"roic":10.56,"wacc":8.43,"eps5y":234.4,"upfz":45.73,"upsa":48.36,"ath":-39.99,"pio":6,"alt":2.8,"rsi":49.88,"rfz":1.6,"rsa":2,"ver":"Buena"},{"ticker":"SONY","name":"Sony Group Corp ADR","sector":"Technology","price":20.79,"mcap":118.98,"size":"Large Cap","beta":0.94,"roe":13.02,"roic":-3.23,"wacc":7.79,"eps5y":null,"upfz":45.26,"upsa":41.32,"ath":-31.48,"pio":7,"alt":3.62,"rsi":51.18,"rfz":1.19,"rsa":2,"ver":"Buena"},{"ticker":"IONQ","name":"IonQ Inc","sector":"Technology","price":49.12,"mcap":18.34,"size":"Large Cap","beta":3.26,"roe":10.75,"roic":6.17,"wacc":21.72,"eps5y":-69.38,"upfz":45.2,"upsa":40.04,"ath":-41.97,"pio":2,"alt":4.86,"rsi":40.98,"rfz":1.64,"rsa":1,"ver":"Buena"},{"ticker":"TMUS","name":"T-Mobile US Inc","sector":"Communication Services","price":177.52,"mcap":192.11,"size":"Large Cap","beta":0.32,"roe":18.02,"roic":6.2,"wacc":4.62,"eps5y":29.65,"upfz":44.85,"upsa":45.94,"ath":-32.13,"pio":5,"alt":1.85,"rsi":44.62,"rfz":1.43,"rsa":2,"ver":"Buena"},{"ticker":"MSFT","name":"Microsoft Corp","sector":"Technology","price":390.49,"mcap":2900.73,"size":"Mega Cap","beta":1.12,"roe":34.01,"roic":24.02,"wacc":10.11,"eps5y":null,"upfz":43.16,"upsa":43.69,"ath":-29.7,"pio":5,"alt":9.28,"rsi":49.8,"rfz":1.23,"rsa":1,"ver":"Buena"},{"ticker":"UBER","name":"Uber Technologies Inc","sector":"Technology","price":74.43,"mcap":151.51,"size":"Large Cap","beta":1.13,"roe":36.55,"roic":23.1,"wacc":9.8,"eps5y":null,"upfz":41.46,"upsa":40.37,"ath":-27.02,"pio":6,"alt":4.16,"rsi":54.32,"rfz":1.35,"rsa":1,"ver":"Evitar"},{"ticker":"META","name":"Meta Platforms Inc","sector":"Communication Services","price":582.9,"mcap":1479.65,"size":"Mega Cap","beta":1.24,"roe":32.93,"roic":21.52,"wacc":10.56,"eps5y":39.86,"upfz":40.85,"upsa":42.08,"ath":-26.79,"pio":5,"alt":8.65,"rsi":49.6,"rfz":1.26,"rsa":1,"ver":"OPORTUNIDAD"},{"ticker":"BAH","name":"Booz Allen Hamilton Holding Corp","sector":"Industrials","price":62.45,"mcap":7.49,"size":"Mid Cap","beta":0.36,"roe":80.17,"roic":16.36,"wacc":5.59,"eps5y":50.35,"upfz":36.43,"upsa":47.05,"ath":-47.98,"pio":4,"alt":4.23,"rsi":33.88,"rfz":3.07,"rsa":3,"ver":"Buena"},{"ticker":"YPF","name":"YPF ADR","sector":"Energy","price":44.4,"mcap":17.46,"size":"Large Cap","beta":1.29,"roe":-2.77,"roic":-1.58,"wacc":2.18,"eps5y":null,"upfz":33.38,"upsa":29.21,"ath":-22.77,"pio":5,"alt":1.59,"rsi":31.55,"rfz":1.43,"rsa":2,"ver":"Evitar"},{"ticker":"NOW","name":"ServiceNow Inc","sector":"Technology","price":106.32,"mcap":109.65,"size":"Large Cap","beta":0.95,"roe":16.07,"roic":12.51,"wacc":9.33,"eps5y":70.18,"upfz":32.04,"upsa":32.73,"ath":-49.73,"pio":5,"alt":9.3,"rsi":54.93,"rfz":1.32,"rsa":1,"ver":"Evitar"},{"ticker":"TLN","name":"Talen Energy Corp","sector":"Utilities","price":364.67,"mcap":16.55,"size":"Large Cap","beta":1.65,"roe":-1.86,"roic":-0.27,"wacc":9.01,"eps5y":88.13,"upfz":31.32,"upsa":29.77,"ath":-19.19,"pio":4,"alt":null,"rsi":43.75,"rfz":1.44,"rsa":2,"ver":"Evitar"},{"ticker":"DIS","name":"Walt Disney Co","sector":"Communication Services","price":99.5,"mcap":172.78,"size":"Large Cap","beta":1.4,"roe":10.54,"roic":7.63,"wacc":10.0,"eps5y":58.46,"upfz":31.1,"upsa":30.32,"ath":-20.15,"pio":7,"alt":2.37,"rsi":47.72,"rfz":1.44,"rsa":1,"ver":"Buena"},{"ticker":"AMZN","name":"Amazon.com Inc","sector":"Consumer Cyclical","price":242.67,"mcap":2610.43,"size":"Mega Cap","beta":1.47,"roe":24.28,"roic":13.93,"wacc":11.34,"eps5y":27.96,"upfz":30.75,"upsa":28.94,"ath":-12.88,"pio":6,"alt":4.54,"rsi":48.7,"rfz":1.21,"rsa":1,"ver":"Buena"},{"ticker":"DASH","name":"DoorDash Inc","sector":"Consumer Cyclical","price":192.01,"mcap":83.66,"size":"Large Cap","beta":1.78,"roe":9.96,"roic":6.92,"wacc":13.5,"eps5y":null,"upfz":29.45,"upsa":28.09,"ath":-32.75,"pio":5,"alt":6.64,"rsi":69.84,"rfz":1.5,"rsa":2,"ver":"Evitar"},{"ticker":"CME","name":"CME Group Inc","sector":"Financial","price":236.6,"mcap":85.73,"size":"Large Cap","beta":0.25,"roe":15.89,"roic":14.06,"wacc":5.68,"eps5y":null,"upfz":28.49,"upsa":27.27,"ath":-26.71,"pio":5,"alt":0.5,"rsi":40.08,"rfz":2.3,"rsa":2,"ver":"Neutral"},{"ticker":"NU","name":"Nu Holdings Ltd","sector":"Financial","price":13.61,"mcap":66.15,"size":"Large Cap","beta":0.95,"roe":30.04,"roic":21.32,"wacc":8.66,"eps5y":null,"upfz":27.92,"upsa":30.93,"ath":-28.29,"pio":2,"alt":null,"rsi":62.37,"rfz":1.59,"rsa":2,"ver":"Neutral"},{"ticker":"MELI","name":"MercadoLibre Inc","sector":"Consumer Cyclical","price":1763.36,"mcap":89.4,"size":"Large Cap","beta":1.34,"roe":31.26,"roic":13.69,"wacc":10.35,"eps5y":60.24,"upfz":26.77,"upsa":25.72,"ath":-30.81,"pio":4,"alt":2.89,"rsi":61.59,"rfz":1.4,"rsa":2,"ver":"Evitar"},{"ticker":"QCOM","name":"Qualcomm Inc","sector":"Technology","price":176.25,"mcap":185.77,"size":"Large Cap","beta":1.64,"roe":36.08,"roic":23.6,"wacc":12.54,"eps5y":-23.9,"upfz":26.68,"upsa":22.22,"ath":-32.19,"pio":5,"alt":5.76,"rsi":38.13,"rfz":2.58,"rsa":3,"ver":"Neutral"},{"ticker":"APP","name":"Applovin Corp","sector":"Communication Services","price":527.06,"mcap":177.06,"size":"Large Cap","beta":2.5,"roe":266.42,"roic":65.61,"wacc":17.62,"eps5y":null,"upfz":26.45,"upsa":24.17,"ath":-29.31,"pio":7,"alt":21.77,"rsi":54.13,"rfz":1.3,"rsa":1,"ver":"Evitar"},{"ticker":"BLK","name":"Blackrock Inc","sector":"Financial","price":995.73,"mcap":161.91,"size":"Large Cap","beta":1.44,"roe":11.95,"roic":8.73,"wacc":11.41,"eps5y":null,"upfz":26.21,"upsa":25.71,"ath":-18.38,"pio":6,"alt":1.66,"rsi":45.69,"rfz":1.42,"rsa":2,"ver":"Neutral"},{"ticker":"AZO","name":"Autozone Inc","sector":"Consumer Cyclical","price":3159.28,"mcap":51.58,"size":"Large Cap","beta":0.33,"roe":null,"roic":26.06,"wacc":5.45,"eps5y":null,"upfz":25.78,"upsa":25.64,"ath":-28.0,"pio":5,"alt":2.79,"rsi":50.55,"rfz":1.45,"rsa":1,"ver":"Neutral"},{"ticker":"WMT","name":"Walmart Inc","sector":"Consumer Defensive","price":111.84,"mcap":890.03,"size":"Mega Cap","beta":0.61,"roe":25.53,"roic":15.01,"wacc":7.2,"eps5y":null,"upfz":25.58,"upsa":23.92,"ath":-17.25,"pio":5,"alt":5.99,"rsi":35.56,"rfz":1.51,"rsa":2,"ver":"Evitar"},{"ticker":"XOM","name":"ExxonMobil Holdings Corp","sector":"Energy","price":137.09,"mcap":568.16,"size":"Mega Cap","beta":0.17,"roe":9.79,"roic":8.8,"wacc":4.82,"eps5y":-20.34,"upfz":23.73,"upsa":23.47,"ath":-22.29,"pio":5,"alt":3.89,"rsi":36.68,"rfz":2.29,"rsa":2,"ver":"Neutral"},{"ticker":"ADBE","name":"Adobe Inc","sector":"Technology","price":219.72,"mcap":87.34,"size":"Large Cap","beta":1.42,"roe":62.95,"roic":43.42,"wacc":11.44,"eps5y":null,"upfz":22.49,"upsa":27.74,"ath":-43.21,"pio":7,"alt":8.35,"rsi":50.65,"rfz":2.51,"rsa":3,"ver":"Buena"},{"ticker":"SPOT","name":"Spotify Technology SA","sector":"Communication Services","price":485.97,"mcap":100.03,"size":"Large Cap","beta":1.58,"roe":39.6,"roic":32.59,"wacc":12.81,"eps5y":null,"upfz":22.14,"upsa":23.27,"ath":-35.06,"pio":6,"alt":15.24,"rsi":55.54,"rfz":1.56,"rsa":2,"ver":"Neutral"},{"ticker":"BKNG","name":"Booking Holdings Inc","sector":"Consumer Cyclical","price":184.56,"mcap":143.01,"size":"Large Cap","beta":1.08,"roe":null,"roic":85.42,"wacc":9.55,"eps5y":158.57,"upfz":21.79,"upsa":21.58,"ath":-20.99,"pio":6,"alt":7.03,"rsi":63.05,"rfz":1.42,"rsa":2,"ver":"OPORTUNIDAD"},{"ticker":"CMG","name":"Chipotle Mexican Grill","sector":"Consumer Cyclical","price":35.39,"mcap":45.4,"size":"Large Cap","beta":0.94,"roe":49.23,"roic":19.77,"wacc":8.57,"eps5y":35.5,"upfz":21.42,"upsa":21.59,"ath":-39.42,"pio":5,"alt":7.41,"rsi":66.21,"rfz":1.72,"rsa":2,"ver":"Evitar"},{"ticker":"GOOGL","name":"Alphabet Inc","sector":"Communication Services","price":359.91,"mcap":4340.36,"size":"Mega Cap","beta":1.24,"roe":38.88,"roic":28.04,"wacc":10.89,"eps5y":29.82,"upfz":20.98,"upsa":20.11,"ath":-11.92,"pio":6,"alt":10.03,"rsi":49.5,"rfz":1.39,"rsa":1,"ver":"Neutral"},{"ticker":"TKO","name":"TKO Group Holdings Inc","sector":"Communication Services","price":194.42,"mcap":37.16,"size":"Large Cap","beta":0.63,"roe":6.01,"roic":2.74,"wacc":7.22,"eps5y":null,"upfz":20.56,"upsa":20.56,"ath":-14.33,"pio":6,"alt":1.64,"rsi":44.19,"rfz":1.67,"rsa":2,"ver":"Evitar"},{"ticker":"MA","name":"Mastercard Incorporated","sector":"Financial","price":539.39,"mcap":476.6,"size":"Mega Cap","beta":0.72,"roe":232.56,"roic":65.06,"wacc":8.06,"eps5y":null,"upfz":19.58,"upsa":19.32,"ath":-10.37,"pio":6,"alt":10.82,"rsi":71.34,"rfz":1.27,"rsa":1,"ver":"Evitar"},{"ticker":"NBIS","name":"Nebius Group NV","sector":"Technology","price":215.62,"mcap":54.26,"size":"Large Cap","beta":4.37,"roe":14.51,"roic":5.0,"wacc":10.34,"eps5y":-19.43,"upfz":19.56,"upsa":13.26,"ath":-28.09,"pio":5,"alt":1.49,"rsi":43.4,"rfz":1.94,"rsa":2,"ver":"Neutral"},{"ticker":"RKLB","name":"Rocket Lab Corp","sector":"Industrials","price":100.46,"mcap":60.09,"size":"Large Cap","beta":2.58,"roe":-13.55,"roic":-7.6,"wacc":18.39,"eps5y":-8.6,"upfz":19.45,"upsa":11.35,"ath":-33.47,"pio":4,"alt":27.92,"rsi":47.84,"rfz":1.39,"rsa":2,"ver":"Neutral"},{"ticker":"COHR","name":"Coherent Corp","sector":"Technology","price":333.36,"mcap":65.22,"size":"Large Cap","beta":2.05,"roe":5.07,"roic":3.34,"wacc":14.95,"eps5y":null,"upfz":17.29,"upsa":16.2,"ath":-24.24,"pio":7,"alt":3.14,"rsi":41.2,"rfz":1.65,"rsa":2,"ver":"Evitar"},{"ticker":"YOU","name":"Clear Secure Inc","sector":"Technology","price":53.79,"mcap":7.19,"size":"Mid Cap","beta":1.06,"roe":81.15,"roic":42.15,"wacc":9.89,"eps5y":null,"upfz":16.38,"upsa":15.26,"ath":-14.25,"pio":6,"alt":2.86,"rsi":48.15,"rfz":2.33,"rsa":2,"ver":"Neutral"},{"ticker":"PEP","name":"PepsiCo Inc","sector":"Consumer Defensive","price":144.22,"mcap":197.12,"size":"Large Cap","beta":0.36,"roe":43.92,"roic":13.65,"wacc":5.34,"eps5y":-2.24,"upfz":14.67,"upsa":14.79,"ath":-15.9,"pio":5,"alt":3.55,"rsi":51.66,"rfz":2.4,"rsa":3,"ver":"Evitar"},{"ticker":"RACE","name":"Ferrari NV","sector":"Consumer Cyclical","price":384.97,"mcap":67.95,"size":"Large Cap","beta":0.91,"roe":43.46,"roic":26.92,"wacc":7.21,"eps5y":null,"upfz":14.7,"upsa":null,"ath":-25.84,"pio":7,"alt":8.64,"rsi":64.65,"rfz":1.5,"rsa":1,"ver":"Evitar"},{"ticker":"NYT","name":"New York Times Co","sector":"Communication Services","price":73.85,"mcap":11.95,"size":"Large Cap","beta":0.95,"roe":19.68,"roic":19.1,"wacc":9.48,"eps5y":28.48,"upfz":13.89,"upsa":13.89,"ath":-15.21,"pio":7,"alt":9.99,"rsi":51.65,"rfz":1.92,"rsa":2,"ver":"Buena"},{"ticker":"RCL","name":"Royal Caribbean Group","sector":"Consumer Cyclical","price":296.3,"mcap":79.47,"size":"Large Cap","beta":1.78,"roe":50.42,"roic":14.9,"wacc":11.9,"eps5y":null,"upfz":13.61,"upsa":13.7,"ath":-19.15,"pio":7,"alt":2.27,"rsi":48.8,"rfz":1.73,"rsa":2,"ver":"Evitar"},{"ticker":"STM","name":"ST Microelectronics","sector":"Technology","price":68.35,"mcap":60.75,"size":"Large Cap","beta":1.93,"roe":0.82,"roic":0.72,"wacc":12.36,"eps5y":-31.59,"upfz":13.59,"upsa":-6.72,"ath":-16.05,"pio":6,"alt":3.77,"rsi":45.95,"rfz":1.93,"rsa":2,"ver":"Evitar"},{"ticker":"TTWO","name":"Take-Two Interactive Software Inc","sector":"Communication Services","price":254.99,"mcap":47.34,"size":"Large Cap","beta":0.96,"roe":-10.56,"roic":-4.68,"wacc":9.21,"eps5y":38.68,"upfz":11.58,"upsa":10.55,"ath":-3.7,"pio":6,"alt":4.01,"rsi":72.51,"rfz":1.28,"rsa":1,"ver":"Evitar"},{"ticker":"V","name":"Visa Inc","sector":"Financial","price":362.13,"mcap":682.3,"size":"Mega Cap","beta":0.75,"roe":59.8,"roic":37.94,"wacc":8.17,"eps5y":null,"upfz":10.95,"upsa":10.1,"ath":0.69,"pio":7,"alt":8.27,"rsi":76.74,"rfz":1.32,"rsa":1,"ver":"Neutral"},{"ticker":"WDC","name":"Western Digital Corp","sector":"Technology","price":539,"mcap":185.78,"size":"Large Cap","beta":2.14,"roe":85.87,"roic":65.46,"wacc":16.12,"eps5y":null,"upfz":10.85,"upsa":9.44,"ath":-32.61,"pio":5,"alt":7.6,"rsi":44.48,"rfz":1.73,"rsa":2,"ver":"Neutral"},{"ticker":"PG","name":"Procter & Gamble Co","sector":"Consumer Defensive","price":151.41,"mcap":352.57,"size":"Mega Cap","beta":0.37,"roe":31.12,"roic":21.21,"wacc":5.91,"eps5y":null,"upfz":7.72,"upsa":8.03,"ath":-9.47,"pio":6,"alt":5.57,"rsi":57.69,"rfz":2.11,"rsa":2,"ver":"Evitar"},{"ticker":"LULU","name":"Lululemon Athletica Inc","sector":"Consumer Cyclical","price":118.43,"mcap":14.05,"size":"Large Cap","beta":0.86,"roe":32.03,"roic":22.1,"wacc":7.84,"eps5y":25.7,"upfz":5.71,"upsa":11.59,"ath":-53.05,"pio":4,"alt":6.95,"rsi":49.2,"rfz":2.97,"rsa":3,"ver":"Buena"},{"ticker":"LLY","name":"Lilly(Eli) & Co","sector":"Healthcare","price":1213.91,"mcap":1143.19,"size":"Mega Cap","beta":0.51,"roe":107.64,"roic":35.82,"wacc":6.77,"eps5y":27.59,"upfz":4.2,"upsa":0.53,"ath":-1.95,"pio":6,"alt":7.62,"rsi":67.44,"rfz":1.55,"rsa":2,"ver":"Evitar"},{"ticker":"KO","name":"Coca-Cola Co","sector":"Consumer Defensive","price":84.14,"mcap":362.01,"size":"Mega Cap","beta":0.35,"roe":45.8,"roic":18.85,"wacc":5.85,"eps5y":null,"upfz":3.91,"upsa":2.17,"ath":0.12,"pio":8,"alt":4.85,"rsi":63.86,"rfz":1.67,"rsa":2,"ver":"Riesgo"},{"ticker":"PYPL","name":"PayPal Holdings Inc","sector":"Financial","price":45.47,"mcap":40.11,"size":"Large Cap","beta":1.33,"roe":25.12,"roic":16.89,"wacc":9.69,"eps5y":37.29,"upfz":3.61,"upsa":13.15,"ath":-42.81,"pio":6,"alt":2.03,"rsi":59.83,"rfz":2.87,"rsa":3,"ver":"OPORTUNIDAD"},{"ticker":"AAPL","name":"Apple Inc","sector":"Technology","price":308.63,"mcap":4532.96,"size":"Mega Cap","beta":1.09,"roe":141.47,"roic":67.76,"wacc":10.09,"eps5y":null,"upfz":2.84,"upsa":2.09,"ath":-2.76,"pio":8,"alt":10.64,"rsi":60.26,"rfz":2.02,"rsa":2,"ver":"Evitar"},{"ticker":"DAL","name":"Delta Air Lines Inc","sector":"Industrials","price":92.75,"mcap":60.94,"size":"Large Cap","beta":1.3,"roe":25.0,"roic":12.18,"wacc":9.01,"eps5y":54.97,"upfz":2.21,"upsa":-1.79,"ath":-2.51,"pio":6,"alt":1.29,"rsi":72,"rfz":1.41,"rsa":1,"ver":"Buena"},{"ticker":"ADP","name":"Automatic Data Processing Inc","sector":"Technology","price":242.27,"mcap":96.84,"size":"Large Cap","beta":0.83,"roe":71.2,"roic":40.82,"wacc":8.86,"eps5y":null,"upfz":1.95,"upsa":1.87,"ath":-23.33,"pio":7,"alt":2.4,"rsi":68.68,"rfz":2.76,"rsa":3,"ver":"Buena"},{"ticker":"NET","name":"Cloudflare Inc","sector":"Technology","price":242.41,"mcap":86.09,"size":"Large Cap","beta":1.66,"roe":-5.88,"roic":-2.35,"wacc":12.92,"eps5y":null,"upfz":1.01,"upsa":0.51,"ath":-12.43,"pio":2,"alt":8.93,"rsi":56.17,"rfz":1.89,"rsa":2,"ver":"Evitar"},{"ticker":"CVS","name":"CVS Health Corp","sector":"Healthcare","price":104.72,"mcap":133.62,"size":"Large Cap","beta":0.6,"roe":3.8,"roic":1.94,"wacc":5.95,"eps5y":-23.94,"upfz":-0.45,"upsa":0.93,"ath":-1.35,"pio":6,"alt":2.35,"rsi":69.94,"rfz":1.53,"rsa":2,"ver":"Evitar"},{"ticker":"LIN","name":"Linde Plc","sector":"Basic Materials","price":546.64,"mcap":252.88,"size":"Mega Cap","beta":0.72,"roe":18.49,"roic":12.12,"wacc":7.59,"eps5y":25.41,"upfz":-0.5,"upsa":-0.11,"ath":1.43,"pio":6,"alt":3.81,"rsi":68.43,"rfz":1.68,"rsa":2,"ver":"Evitar"},{"ticker":"UNH","name":"Unitedhealth Group Inc","sector":"Healthcare","price":425.36,"mcap":386.29,"size":"Mega Cap","beta":0.63,"roe":12.49,"roic":7.11,"wacc":7.14,"eps5y":-3.76,"upfz":-2.77,"upsa":-3.17,"ath":-0.62,"pio":5,"alt":null,"rsi":64.87,"rfz":1.6,"rsa":2,"ver":"Buena"},{"ticker":"NTRA","name":"Natera Inc","sector":"Healthcare","price":279.32,"mcap":40,"size":"Large Cap","beta":1.51,"roe":-15.02,"roic":-11.79,"wacc":12.46,"eps5y":35.09,"upfz":-4.94,"upsa":-5.28,"ath":-0.04,"pio":4,"alt":17.65,"rsi":78,"rfz":1.42,"rsa":2,"ver":"Evitar"},{"ticker":"HOOD","name":"Robinhood Markets Inc","sector":"Financial","price":112.73,"mcap":101.6,"size":"Large Cap","beta":2.33,"roe":21.92,"roic":19.88,"wacc":15.07,"eps5y":259.78,"upfz":-5.16,"upsa":-6.45,"ath":-26.73,"pio":5,"alt":null,"rsi":67.01,"rfz":1.73,"rsa":2,"ver":"Evitar"},{"ticker":"CRWD","name":"Crowdstrike Holdings Inc","sector":"Technology","price":193.98,"mcap":197.52,"size":"Large Cap","beta":1.24,"roe":-1.12,"roic":-0.83,"wacc":11.02,"eps5y":-8.78,"upfz":-5.55,"upsa":-7.6,"ath":-1.28,"pio":3,"alt":10.98,"rsi":71.92,"rfz":1.61,"rsa":2,"ver":"Evitar"},{"ticker":"DDOG","name":"Datadog Inc","sector":"Technology","price":260.36,"mcap":92.68,"size":"Large Cap","beta":1.54,"roe":3.93,"roic":2.59,"wacc":12.57,"eps5y":null,"upfz":-5.99,"upsa":-6.42,"ath":-6.58,"pio":5,"alt":10.61,"rsi":68.41,"rfz":1.4,"rsa":1,"ver":"Evitar"},{"ticker":"PANW","name":"Palo Alto Networks Inc","sector":"Technology","price":348.06,"mcap":283.67,"size":"Mega Cap","beta":0.9,"roe":4.83,"roic":2.85,"wacc":9.18,"eps5y":null,"upfz":-6.33,"upsa":-8.54,"ath":-2.8,"pio":4,"alt":4.59,"rsi":78.46,"rfz":1.57,"rsa":2,"ver":"Evitar"},{"ticker":"FTNT","name":"Fortinet Inc","sector":"Technology","price":156.25,"mcap":114.48,"size":"Large Cap","beta":1.08,"roe":132.39,"roic":131.48,"wacc":10.21,"eps5y":32.99,"upfz":-26.5,"upsa":-27.11,"ath":-2.22,"pio":5,"alt":5.95,"rsi":67.06,"rfz":2.76,"rsa":3,"ver":"Evitar"},{"ticker":"SCCO","name":"Southern Copper Corp","sector":"Basic Materials","price":172.01,"mcap":143.51,"size":"Large Cap","beta":1.13,"roe":46.51,"roic":26.0,"wacc":10.13,"eps5y":null,"upfz":-7.73,"upsa":-4.31,"ath":-22.4,"pio":7,"alt":8.78,"rsi":44.25,"rfz":3.75,"rsa":4,"ver":"Neutral"},{"ticker":"SPCX","name":"Space Exploration Technologies Corp","sector":"Industrials","price":162,"mcap":2135.77,"size":"Mega Cap","beta":null,"roe":null,"roic":null,"wacc":null,"eps5y":-3.29,"upfz":41.49,"upsa":16.15,"ath":-28.2,"pio":2,"alt":-0.45,"rsi":0.32,"rfz":2.23,"rsa":2,"ver":"Neutral"}]
+;
 
-var C = { TICKER:0,NAME:1,SECTOR:2,PRICE:3,MCAP:4,SIZE:5,BETA:8,ROE:13,ROIC:14,WACC:15,EPS_HIST:20,UPSIDE_FZ:32,UPSIDE_SA:33,ATH_DISC:34,PIOTROSKI:35,ALTMAN:36,RSI:37,RECOM_FZ:39,RECOM_SA:40,VEREDICTO:50 };
+const SECTOR_COLORS = {
+  'Technology':        {bg:'#e5eef8', text:'#1c4f82'},
+  'Communication Services': {bg:'#efe7f8', text:'#5b3a8a'},
+  'Consumer Cyclical': {bg:'#fdf0e0', text:'#8a5a10'},
+  'Consumer Defensive':{bg:'#e6f4ea', text:'#1f6b3d'},
+  'Financial':         {bg:'#e1f2f0', text:'#0f6e64'},
+  'Healthcare':        {bg:'#fbe7ee', text:'#9c2f57'},
+  'Industrials':       {bg:'#e9e9e4', text:'#4a4a42'},
+  'Energy':            {bg:'#fdece0', text:'#a4460f'},
+  'Basic Materials':   {bg:'#f1ecdf', text:'#6e5a20'},
+  'Utilities':         {bg:'#e6eef4', text:'#2c5878'}
+};
 
-var DATA = [], filtered = [], sortKey = 'upside_fz', sortDir = -1;
+const VEREDICTO_COLORS = {
+  'OPORTUNIDAD': {bg:'var(--green-bg)', text:'var(--green)'},
+  'Buena':       {bg:'var(--teal-bg)',  text:'var(--teal)'},
+  'Neutral':     {bg:'var(--gray-bg)',  text:'var(--gray)'},
+  'Riesgo':      {bg:'var(--orange-bg)',text:'var(--orange)'},
+  'Evitar':      {bg:'var(--red-bg)',   text:'var(--red)'}
+};
 
-window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('f-upside').addEventListener('input', function() {
-    document.getElementById('f-upside-val').textContent = this.value + '%';
-    applyFilters();
+let sortKey = 'upfz';
+let sortDir = -1;
+
+function fmtPct(v, decimals=1){
+  if(v === null || v === undefined || isNaN(v)) return null;
+  return v.toFixed(decimals) + '%';
+}
+function fmtNum(v, decimals=2){
+  if(v === null || v === undefined || isNaN(v)) return null;
+  return v.toFixed(decimals);
+}
+
+function naSpan(){
+  return '<span class="na">N/A</span>';
+}
+
+function colorForPctThreshold(v, greenMin, redMax){
+  // higher is better: >=greenMin green, <=redMax red, else amber
+  if(v === null) return '';
+  if(v >= greenMin) return 'green-txt';
+  if(v <= redMax) return 'red-txt';
+  return 'amber-txt';
+}
+
+function renderBeta(v){
+  if(v === null) return naSpan();
+  let cls = v < 1 ? 'green-txt' : (v <= 1.5 ? 'black-txt' : 'amber-txt');
+  return '<span class="'+cls+'">'+fmtNum(v,2)+'</span>';
+}
+
+function renderRoeRoic(v){
+  if(v === null) return naSpan();
+  let cls = v >= 15 ? 'green-txt' : (v >= 5 ? 'amber-txt' : 'red-txt');
+  return '<span class="'+cls+'">'+fmtPct(v)+'</span>';
+}
+
+function renderWacc(row){
+  if(row.wacc === null) return naSpan();
+  let destroysValue = row.roic !== null && row.wacc > row.roic;
+  let cls = destroysValue ? 'red-txt' : '';
+  return '<span class="'+cls+'">'+fmtPct(row.wacc)+'</span>';
+}
+
+function renderEps5y(v){
+  if(v === null) return naSpan();
+  let cls = v >= 0 ? 'green-txt' : 'red-txt';
+  return '<span class="'+cls+'">'+fmtPct(v)+'</span>';
+}
+
+function renderUpside(v){
+  if(v === null) return naSpan();
+  let cls;
+  if(v >= 30) cls = 'green-txt';
+  else if(v >= 10) cls = 'greenlight-txt';
+  else if(v >= 0) cls = 'black-txt';
+  else cls = 'red-txt';
+  return '<span class="'+cls+'">'+fmtPct(v)+'</span>';
+}
+
+function renderAth(v){
+  if(v === null) return naSpan();
+  let cls = v >= 0 ? 'green-txt' : 'red-txt';
+  return '<span class="'+cls+'">'+fmtPct(v)+'</span>';
+}
+
+function renderRsi(v){
+  if(v === null) return naSpan();
+  let cls;
+  if(v > 70) cls = 'red-txt';
+  else if(v < 30) cls = 'green-txt';
+  else cls = 'black-txt';
+  return '<span class="'+cls+'">'+fmtNum(v,2)+'</span>';
+}
+
+function renderRecom(v){
+  if(v === null) return naSpan();
+  let cls;
+  if(v <= 1.5) cls = 'green-txt';
+  else if(v <= 2) cls = 'blue-txt';
+  else if(v <= 3) cls = 'black-txt';
+  else cls = 'red-txt';
+  return '<span class="'+cls+'">'+fmtNum(v,2)+'</span>';
+}
+
+function renderPiotroski(v){
+  if(v === null) return naSpan();
+  let color;
+  if(v >= 7) color = 'var(--green)';
+  else if(v >= 5) color = 'var(--blue)';
+  else if(v >= 3) color = 'var(--amber)';
+  else color = 'var(--red)';
+  return '<span class="dot" style="background:'+color+'"></span>' + v;
+}
+
+function renderAltman(v){
+  if(v === null) return naSpan();
+  let cls;
+  if(v >= 3) cls = 'green-txt';
+  else if(v >= 1.8) cls = 'amber-txt';
+  else cls = 'red-txt';
+  return '<span class="'+cls+'">'+fmtNum(v,2)+'</span>';
+}
+
+function sectorBadge(sector){
+  let c = SECTOR_COLORS[sector] || {bg:'#eee', text:'#333'};
+  return '<span class="badge" style="background:'+c.bg+';color:'+c.text+'">'+sector+'</span>';
+}
+
+function veredictoBadge(ver){
+  let c = VEREDICTO_COLORS[ver] || {bg:'#eee', text:'#333'};
+  return '<span class="badge" style="background:'+c.bg+';color:'+c.text+'">'+ver+'</span>';
+}
+
+function populateFilters(){
+  const sectorSel = document.getElementById('sectorFilter');
+  const veredictoSel = document.getElementById('veredictoFilter');
+  const sectors = [...new Set(DATA.map(d=>d.sector))].sort();
+  const veredictos = [...new Set(DATA.map(d=>d.ver))].sort();
+  sectors.forEach(s=>{
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    sectorSel.appendChild(opt);
   });
-  document.getElementById('f-sector').addEventListener('change', applyFilters);
-  document.getElementById('f-veredicto').addEventListener('change', applyFilters);
-  loadData();
-});
-
-function loadData() {
-  showLoading('Leyendo Google Sheet...');
-  fetch(CSV_URL)
-    .then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status + ' - El sheet debe ser publico');
-      return r.text();
-    })
-    .then(function(text) {
-      DATA = parseCSV(text);
-      if (DATA.length === 0) throw new Error('No se encontraron datos validos');
-      initFilters();
-      applyFilters();
-      document.getElementById('main-content').style.display = '';
-      document.getElementById('loading-div').style.display = 'none';
-      document.getElementById('error-div').style.display = 'none';
-      var now = new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
-      document.getElementById('status').textContent = DATA.length + ' tickers - Actualizado ' + now;
-    })
-    .catch(function(e) {
-      showError(e.message);
-    });
-}
-
-function parseCSV(text) {
-  var lines = text.split(/\r?\n/);
-  var result = [];
-  for (var i = 1; i < lines.length; i++) {
-    var r = splitCSVLine(lines[i]);
-    if (!r || r.length < 3) continue;
-    var ticker = (r[C.TICKER] || '').trim();
-    if (!ticker || ticker === 'TICKERS' || ticker === 'ETF') continue;
-    result.push({
-      ticker: ticker,
-      name: (r[C.NAME] || '').trim(),
-      sector: (r[C.SECTOR] || '').trim(),
-      price: num(r[C.PRICE]),
-      mcap: num(r[C.MCAP]),
-      size: (r[C.SIZE] || '').trim(),
-      beta: num(r[C.BETA]),
-      roe: pctNum(r[C.ROE]),
-      roic: pctNum(r[C.ROIC]),
-      wacc: pctNum(r[C.WACC]),
-      eps_hist: pctNum(r[C.EPS_HIST]),
-      upside_fz: pctNum(r[C.UPSIDE_FZ]),
-      upside_sa: pctNum(r[C.UPSIDE_SA]),
-      ath_disc: pctNum(r[C.ATH_DISC]),
-      piotroski: num(r[C.PIOTROSKI]),
-      altman: num(r[C.ALTMAN]),
-      rsi: num(r[C.RSI]),
-      recom_fz: num(r[C.RECOM_FZ]),
-      recom_sa: num(r[C.RECOM_SA]),
-      veredicto: (r[C.VEREDICTO] || '').trim() || 'N/A'
-    });
-  }
-  return result;
-}
-
-function splitCSVLine(line) {
-  var result = [], cell = '', inQ = false;
-  for (var i = 0; i < line.length; i++) {
-    var c = line[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { result.push(cell); cell = ''; }
-    else { cell += c; }
-  }
-  result.push(cell);
-  return result;
-}
-
-function num(v) {
-  if (!v || v.trim() === '' || v === 'N/A' || v === 'ERROR' || v.indexOf('#') >= 0) return null;
-  var n = parseFloat(v.replace(/[,%]/g, ''));
-  return isNaN(n) ? null : n;
-}
-function pctNum(v) {
-  if (!v || v.trim() === '' || v === 'N/A' || v === 'ERROR' || v.indexOf('#') >= 0) return null;
-  var n = parseFloat(v.replace('%', ''));
-  return isNaN(n) ? null : n;
-}
-
-function initFilters() {
-  var sectors = [];
-  DATA.forEach(function(d) { if (d.sector && sectors.indexOf(d.sector) < 0) sectors.push(d.sector); });
-  sectors.sort();
-  var sel = document.getElementById('f-sector');
-  sel.innerHTML = '<option value="">Todos</option>';
-  sectors.forEach(function(s) {
-    var o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    sel.appendChild(o);
+  veredictos.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    veredictoSel.appendChild(opt);
   });
 }
 
-function resetFilters() {
-  document.getElementById('f-sector').value = '';
-  document.getElementById('f-veredicto').value = '';
-  document.getElementById('f-upside').value = -100;
-  document.getElementById('f-upside-val').textContent = '-';
-  applyFilters();
-}
-
-function applyFilters() {
-  var sec = document.getElementById('f-sector').value;
-  var verd = document.getElementById('f-veredicto').value;
-  var minUp = parseInt(document.getElementById('f-upside').value);
-  filtered = DATA.filter(function(d) {
-    if (sec && d.sector !== sec) return false;
-    if (verd && d.veredicto !== verd) return false;
-    if (minUp > -100 && (d.upside_fz === null || d.upside_fz < minUp)) return false;
+function getFiltered(){
+  const sector = document.getElementById('sectorFilter').value;
+  const veredicto = document.getElementById('veredictoFilter').value;
+  const minUpside = parseFloat(document.getElementById('upsideSlider').value);
+  return DATA.filter(d=>{
+    if(sector && d.sector !== sector) return false;
+    if(veredicto && d.ver !== veredicto) return false;
+    if(d.upfz === null || d.upfz < minUpside) return false;
     return true;
   });
-  doSort();
-  render();
 }
 
-function sortBy(key) {
-  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
-  document.querySelectorAll('thead th').forEach(function(t) { t.classList.remove('sorted'); });
-  var icon = document.getElementById('i-' + key);
-  if (icon) { icon.closest('th').classList.add('sorted'); icon.textContent = sortDir === 1 ? '↑' : '↓'; }
-  doSort(); render();
-}
-
-function doSort() {
-  filtered.sort(function(a, b) {
-    var av = a[sortKey], bv = b[sortKey];
-    if (av === null && bv === null) return 0;
-    if (av === null) return 1;
-    if (bv === null) return -1;
-    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
-    return (av - bv) * sortDir;
+function sortData(arr){
+  return [...arr].sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(av === null && bv === null) return 0;
+    if(av === null) return 1;
+    if(bv === null) return -1;
+    if(typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
   });
 }
 
-function na(v, fn) { return v === null ? '<span class="c-na">N/A</span>' : fn(v); }
-function pct(v, d) { d = d || 1; return (v >= 0 ? '+' : '') + v.toFixed(d) + '%'; }
+function renderCards(filtered){
+  const total = filtered.length;
+  const oportunidades = filtered.filter(d=>d.ver === 'OPORTUNIDAD').length;
+  const upsideVals = filtered.filter(d=>d.upfz !== null).map(d=>d.upfz);
+  const avgUpside = upsideVals.length ? (upsideVals.reduce((a,b)=>a+b,0)/upsideVals.length) : null;
+  const pioVals = filtered.filter(d=>d.pio !== null).map(d=>d.pio);
+  const avgPio = pioVals.length ? (pioVals.reduce((a,b)=>a+b,0)/pioVals.length) : null;
+  const compras = filtered.filter(d=>d.rfz !== null && d.rfz <= 2).length;
 
-function fmtUpside(v) {
-  return na(v, function(v) {
-    var c = v >= 30 ? 'c-green' : v >= 10 ? 'c-lgreen' : v >= 0 ? '' : 'c-red';
-    return '<span class="' + c + '" style="' + (!c ? 'color:#1a1a1a' : '') + '">' + pct(v) + '</span>';
-  });
-}
-function fmtROE(v) { return na(v, function(v) { return '<span class="' + (v>=15?'c-green':v>=5?'c-amber':'c-red') + '">' + pct(v) + '</span>'; }); }
-function fmtROIC(v) { return na(v, function(v) { return '<span class="' + (v>=15?'c-green':v>=5?'c-amber':'c-red') + '">' + pct(v) + '</span>'; }); }
-function fmtWACC(roic, wacc) {
-  return na(wacc, function(w) {
-    var bad = roic !== null && w > roic;
-    return '<span class="' + (bad?'c-red':'') + '" title="' + (bad?'Destruye valor: WACC > ROIC':'') + '">' + w.toFixed(2) + '%</span>';
-  });
-}
-function fmtEPS(v) { return na(v, function(v) { return '<span class="' + (v>0?'c-green':'c-red') + '">' + pct(v) + '</span>'; }); }
-function fmtBeta(v) { return na(v, function(v) { return '<span class="' + (v<1?'c-green':v<=1.5?'':'c-amber') + '">' + v.toFixed(2) + '</span>'; }); }
-function fmtRSI(v) { return na(v, function(v) { return '<span class="' + (v>70?'c-red':v<30?'c-green':'') + '">' + v.toFixed(1) + '</span>'; }); }
-function fmtRecomFZ(v) {
-  return na(v, function(v) {
-    var s = v<=1.5 ? 'color:#16a34a;font-weight:600' : v<=2 ? 'color:#2563eb' : v<=3 ? 'color:#555' : 'color:#dc2626;font-weight:600';
-    return '<span style="' + s + '">' + v.toFixed(2) + '</span>';
-  });
-}
-function fmtPio(v) {
-  return na(v, function(v) {
-    var c = v>=7 ? 'pio-green' : v>=5 ? 'pio-blue' : v>=3 ? 'pio-amber' : 'pio-red';
-    return '<span class="pio"><span class="pio-dot ' + c + '"></span>' + v + '</span>';
-  });
-}
-function fmtATH(v) { return na(v, function(v) { return '<span class="' + (v>=0?'c-green':'c-red') + '">' + pct(v) + '</span>'; }); }
-function sectorKey(s) { return (s || '').replace(/\s+/g, ''); }
-function verdBadge(v) {
-  var map = {OPORTUNIDAD:'verd-OPORTUNIDAD', Buena:'verd-Buena', Neutral:'verd-Neutral', Riesgo:'verd-Riesgo', Evitar:'verd-Evitar'};
-  return '<span class="badge ' + (map[v] || 'verd-na') + '">' + (v || 'N/A') + '</span>';
+  const cards = [
+    {label:'Total Tickers', value: total, cls:''},
+    {label:'Oportunidades', value: oportunidades, cls:'green-txt'},
+    {label:'Upside Promedio FZ', value: avgUpside !== null ? avgUpside.toFixed(1)+'%' : '—', cls: avgUpside !== null && avgUpside >= 0 ? 'green-txt' : 'red-txt'},
+    {label:'Piotroski Promedio', value: avgPio !== null ? avgPio.toFixed(1) : '—', cls:''},
+    {label:'Recomendaciones de Compra', value: compras, cls:'blue-txt'}
+  ];
+
+  document.getElementById('cards').innerHTML = cards.map(c=>`
+    <div class="card">
+      <div class="card-label">${c.label}</div>
+      <div class="card-value ${c.cls}">${c.value}</div>
+    </div>
+  `).join('');
 }
 
-function render() {
-  var html = '';
-  filtered.forEach(function(d) {
-    html += '<tr>';
-    html += '<td><span class="ticker">' + d.ticker + '</span></td>';
-    html += '<td><div class="name-cell" title="' + d.name + '">' + d.name + '</div></td>';
-    html += '<td><span class="badge badge-' + sectorKey(d.sector) + '">' + d.sector + '</span></td>';
-    html += '<td>' + (d.price != null ? '$' + d.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '<span class="c-na">N/A</span>') + '</td>';
-    html += '<td>' + (d.mcap != null ? d.mcap.toFixed(2) + 'B' : '<span class="c-na">N/A</span>') + '</td>';
-    html += '<td>' + (d.size || '<span class="c-na">N/A</span>') + '</td>';
-    html += '<td>' + fmtBeta(d.beta) + '</td>';
-    html += '<td>' + fmtROE(d.roe) + '</td>';
-    html += '<td>' + fmtROIC(d.roic) + '</td>';
-    html += '<td>' + fmtWACC(d.roic, d.wacc) + '</td>';
-    html += '<td>' + fmtEPS(d.eps_hist) + '</td>';
-    html += '<td>' + fmtUpside(d.upside_fz) + '</td>';
-    html += '<td>' + fmtUpside(d.upside_sa) + '</td>';
-    html += '<td>' + fmtATH(d.ath_disc) + '</td>';
-    html += '<td>' + verdBadge(d.veredicto) + '</td>';
-    html += '<td>' + fmtPio(d.piotroski) + '</td>';
-    html += '<td>' + (d.altman != null ? d.altman.toFixed(2) : '<span class="c-na">N/A</span>') + '</td>';
-    html += '<td>' + fmtRSI(d.rsi) + '</td>';
-    html += '<td>' + fmtRecomFZ(d.recom_fz) + '</td>';
-    html += '<td>' + (d.recom_sa != null ? d.recom_sa : '<span class="c-na">N/A</span>') + '</td>';
-    html += '</tr>';
+function renderTable(){
+  const filtered = sortData(getFiltered());
+  renderCards(filtered);
+  const tbody = document.getElementById('tableBody');
+  const emptyState = document.getElementById('emptyState');
+
+  if(filtered.length === 0){
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(d => `
+    <tr>
+      <td class="ticker-cell">${d.ticker}</td>
+      <td class="name-cell" title="${d.name}">${d.name}</td>
+      <td>${sectorBadge(d.sector)}</td>
+      <td class="num">$${fmtNum(d.price,2)}</td>
+      <td class="num">${fmtNum(d.mcap,2)}</td>
+      <td>${d.size}</td>
+      <td class="num">${renderBeta(d.beta)}</td>
+      <td class="num">${renderRoeRoic(d.roe)}</td>
+      <td class="num">${renderRoeRoic(d.roic)}</td>
+      <td class="num">${renderWacc(d)}</td>
+      <td class="num">${renderEps5y(d.eps5y)}</td>
+      <td class="num">${renderUpside(d.upfz)}</td>
+      <td class="num">${renderUpside(d.upsa)}</td>
+      <td class="num">${renderAth(d.ath)}</td>
+      <td>${veredictoBadge(d.ver)}</td>
+      <td class="num">${renderPiotroski(d.pio)}</td>
+      <td class="num">${renderAltman(d.alt)}</td>
+      <td class="num">${renderRsi(d.rsi)}</td>
+      <td class="num">${renderRecom(d.rfz)}</td>
+      <td class="num">${renderRecom(d.rsa)}</td>
+    </tr>
+  `).join('');
+
+  updateSortHeaders();
+}
+
+function updateSortHeaders(){
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sorted');
+    const arrow = th.querySelector('.arrow');
+    if(th.dataset.key === sortKey){
+      th.classList.add('sorted');
+      arrow.textContent = sortDir === 1 ? '↑' : '↓';
+    } else {
+      arrow.textContent = '↕';
+    }
   });
-  document.getElementById('tbody').innerHTML = html;
-
-  document.getElementById('sum-total').textContent = filtered.length;
-  document.getElementById('sum-op').textContent = filtered.filter(function(d) { return d.veredicto === 'OPORTUNIDAD'; }).length;
-  var ups = filtered.filter(function(d) { return d.upside_fz != null; });
-  document.getElementById('sum-upside').textContent = ups.length ? ('+' + (ups.reduce(function(a,b){return a+b.upside_fz;},0)/ups.length).toFixed(1) + '%') : '-';
-  var pios = filtered.filter(function(d) { return d.piotroski != null; });
-  document.getElementById('sum-pio').textContent = pios.length ? (pios.reduce(function(a,b){return a+b.piotroski;},0)/pios.length).toFixed(1) : '-';
-  document.getElementById('sum-buy').textContent = filtered.filter(function(d) { return d.recom_fz != null && d.recom_fz <= 2; }).length;
-  document.getElementById('row-count').textContent = 'Mostrando ' + filtered.length + ' de ' + DATA.length + ' tickers';
 }
 
-function showLoading(msg) {
-  document.getElementById('main-content').style.display = 'none';
-  document.getElementById('error-div').style.display = 'none';
-  document.getElementById('loading-div').style.display = 'flex';
-  document.getElementById('loading-msg').textContent = msg;
-}
-function showError(msg) {
-  document.getElementById('loading-div').style.display = 'none';
-  document.getElementById('main-content').style.display = 'none';
-  document.getElementById('error-div').style.display = 'block';
-  document.getElementById('error-div').innerHTML = '<div class="error-box"><strong>No se pudo cargar el sheet:</strong> ' + msg + '<br><br>El sheet debe estar compartido como "Cualquiera con el enlace puede ver".</div>';
-}
+document.querySelectorAll('thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey === key){
+      sortDir *= -1;
+    } else {
+      sortKey = key;
+      sortDir = -1;
+    }
+    renderTable();
+  });
+});
+
+document.getElementById('sectorFilter').addEventListener('change', renderTable);
+document.getElementById('veredictoFilter').addEventListener('change', renderTable);
+document.getElementById('upsideSlider').addEventListener('input', (e)=>{
+  document.getElementById('upsideValue').textContent = '≥ ' + e.target.value + '%';
+  renderTable();
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  document.getElementById('sectorFilter').value = '';
+  document.getElementById('veredictoFilter').value = '';
+  document.getElementById('upsideSlider').value = -30;
+  document.getElementById('upsideValue').textContent = '≥ -30%';
+  renderTable();
+});
+
+populateFilters();
+document.getElementById('lastUpdate').textContent = 'Datos cargados del sheet · ' + DATA.length + ' tickers · Última actualización: 05/07/2026 07:01';
+renderTable();
 </script>
+
+<style>
+.blue-txt{color:var(--blue); font-weight:600;}
+</style>
+
 </body>
 </html>
